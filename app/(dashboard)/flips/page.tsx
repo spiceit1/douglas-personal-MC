@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, X, Pencil, DollarSign, TrendingUp, Tag, Ticket, Search, Filter, ExternalLink, ChevronDown } from "lucide-react";
+import { Plus, X, Pencil, DollarSign, TrendingUp, Tag, Ticket, Search, Filter, ExternalLink, Eye, ChevronDown, MoreHorizontal, Bell, BellOff, Trash2 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -725,6 +725,555 @@ function MobileFlipCard({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+// ─── Ticket Watch Types ───────────────────────────────────────────────────────
+
+interface TicketWatch {
+  id: number;
+  event_name: string;
+  venue: string | null;
+  event_date: string | null;
+  section_filter: string;
+  quantity: number;
+  max_price_per_ticket: number | null;
+  alert_email: string | null;
+  alert_telegram: boolean;
+  status: string;
+  notes: string | null;
+  last_checked_at: string | null;
+  last_cheapest_price: number | null;
+  last_cheapest_platform: string | null;
+  price_history: Array<{ price: number; platform: string; checked_at: string }>;
+  created_at: string;
+  updated_at: string;
+}
+
+interface WatchFormData {
+  event_name: string;
+  venue: string;
+  event_date: string;
+  section_filter: string;
+  quantity: number;
+  max_price_per_ticket: string;
+  alert_email: string;
+  notes: string;
+}
+
+const defaultWatchForm: WatchFormData = {
+  event_name: "",
+  venue: "",
+  event_date: "",
+  section_filter: "Floor GA",
+  quantity: 2,
+  max_price_per_ticket: "",
+  alert_email: "",
+  notes: "",
+};
+
+function timeAgo(dateStr: string | null): string {
+  if (!dateStr) return "Never";
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+function WatchModal({
+  onClose,
+  onSave,
+  initial,
+}: {
+  onClose: () => void;
+  onSave: (data: WatchFormData) => void;
+  initial?: TicketWatch | null;
+}) {
+  const [form, setForm] = useState<WatchFormData>(
+    initial
+      ? {
+          event_name: initial.event_name,
+          venue: initial.venue ?? "",
+          event_date: initial.event_date ?? "",
+          section_filter: initial.section_filter,
+          quantity: initial.quantity,
+          max_price_per_ticket: initial.max_price_per_ticket != null ? String(initial.max_price_per_ticket) : "",
+          alert_email: initial.alert_email ?? "",
+          notes: initial.notes ?? "",
+        }
+      : defaultWatchForm
+  );
+
+  const set = (field: keyof WatchFormData, value: string | number) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.event_name.trim()) return;
+    onSave(form);
+    onClose();
+  };
+
+  const inputStyle = {
+    background: "var(--bg-tertiary)",
+    borderColor: "var(--border-default)",
+    color: "var(--text-primary)",
+    outline: "none",
+  };
+
+  const maxBudgetTotal =
+    form.max_price_per_ticket && form.quantity
+      ? parseFloat(form.max_price_per_ticket) * form.quantity
+      : null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.75)" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg rounded-xl border p-6 overflow-y-auto"
+        style={{
+          background: "var(--bg-elevated)",
+          borderColor: "var(--border-default)",
+          boxShadow: "0 12px 40px rgba(0,0,0,0.7)",
+          maxHeight: "90vh",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
+            {initial ? "Edit Watch" : "Add Ticket Watch"}
+          </h2>
+          <button onClick={onClose} style={{ color: "var(--text-tertiary)" }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+              Event Name *
+            </label>
+            <input
+              autoFocus
+              required
+              value={form.event_name}
+              onChange={(e) => set("event_name", e.target.value)}
+              placeholder="Bruce Springsteen & The E Street Band"
+              className="w-full px-3 py-2 rounded-md border text-sm"
+              style={inputStyle}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+                Venue
+              </label>
+              <input
+                value={form.venue}
+                onChange={(e) => set("venue", e.target.value)}
+                placeholder="Madison Square Garden"
+                className="w-full px-3 py-2 rounded-md border text-sm"
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+                Event Date
+              </label>
+              <input
+                type="date"
+                value={form.event_date}
+                onChange={(e) => set("event_date", e.target.value)}
+                className="w-full px-3 py-2 rounded-md border text-sm"
+                style={{ ...inputStyle, colorScheme: "dark" }}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+                Section / Zone
+              </label>
+              <input
+                value={form.section_filter}
+                onChange={(e) => set("section_filter", e.target.value)}
+                placeholder="Floor GA"
+                className="w-full px-3 py-2 rounded-md border text-sm"
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+                Quantity
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={form.quantity}
+                onChange={(e) => set("quantity", parseInt(e.target.value) || 1)}
+                className="w-full px-3 py-2 rounded-md border text-sm"
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+              Max Price Per Ticket ($)
+            </label>
+            <input
+              type="number"
+              min={0}
+              step={0.01}
+              value={form.max_price_per_ticket}
+              onChange={(e) => set("max_price_per_ticket", e.target.value)}
+              placeholder="700"
+              className="w-full px-3 py-2 rounded-md border text-sm"
+              style={inputStyle}
+            />
+            {maxBudgetTotal && (
+              <div className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
+                Total budget: ${maxBudgetTotal.toLocaleString()}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+              Alert Email
+            </label>
+            <input
+              type="email"
+              value={form.alert_email}
+              onChange={(e) => set("alert_email", e.target.value)}
+              placeholder="you@example.com"
+              className="w-full px-3 py-2 rounded-md border text-sm"
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+              Notes
+            </label>
+            <textarea
+              value={form.notes}
+              onChange={(e) => set("notes", e.target.value)}
+              placeholder="Alert only — do NOT auto-buy..."
+              rows={2}
+              className="w-full px-3 py-2 rounded-md border text-sm resize-none"
+              style={inputStyle}
+            />
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 rounded-md text-sm font-medium border"
+              style={{ borderColor: "var(--border-default)", color: "var(--text-secondary)", background: "transparent" }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 rounded-md text-sm font-medium"
+              style={{ background: "var(--accent-purple)", color: "white" }}
+            >
+              {initial ? "Save Changes" : "Add Watch"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Ticket Watch Card ────────────────────────────────────────────────────────
+
+function TicketWatchCard({
+  watch,
+  onEdit,
+  onDelete,
+  onPause,
+  onResume,
+}: {
+  watch: TicketWatch;
+  onEdit: () => void;
+  onDelete: () => void;
+  onPause: () => void;
+  onResume: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const maxPrice = watch.max_price_per_ticket != null ? Number(watch.max_price_per_ticket) : null;
+  const cheapest = watch.last_cheapest_price != null ? Number(watch.last_cheapest_price) : null;
+  const totalBudget = maxPrice != null ? maxPrice * watch.quantity : null;
+
+  const isUnderBudget = cheapest != null && maxPrice != null && cheapest <= maxPrice;
+  const isPaused = watch.status === "paused";
+
+  let statusDot = "🟡";
+  let statusLabel = "Watching";
+  let statusColor = "#f0b429";
+
+  if (isPaused) {
+    statusDot = "⏸";
+    statusLabel = "Paused";
+    statusColor = "var(--text-muted)";
+  } else if (cheapest === null) {
+    statusDot = "🟡";
+    statusLabel = "Watching";
+    statusColor = "#f0b429";
+  } else if (isUnderBudget) {
+    statusDot = "🟢";
+    statusLabel = "Under budget!";
+    statusColor = "#26c97a";
+  } else {
+    statusDot = "🟡";
+    statusLabel = "Above budget";
+    statusColor = "#f0b429";
+  }
+
+  const history = Array.isArray(watch.price_history) ? watch.price_history.slice(-5) : [];
+
+  const eventDate = watch.event_date
+    ? new Date(watch.event_date + "T00:00:00").toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        background: "var(--bg-elevated)",
+        border: `1px solid ${isPaused ? "var(--border-subtle)" : isUnderBudget ? "#26c97a30" : "var(--border-subtle)"}`,
+        borderRadius: 14,
+        padding: "18px 20px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+        opacity: isPaused ? 0.65 : 1,
+      }}
+    >
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 17,
+              fontWeight: 700,
+              color: "var(--text-primary)",
+              lineHeight: 1.3,
+              marginBottom: 4,
+            }}
+          >
+            {watch.event_name}
+          </div>
+          {(watch.venue || eventDate) && (
+            <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+              {[watch.venue, eventDate].filter(Boolean).join(" · ")}
+            </div>
+          )}
+        </div>
+
+        {/* ••• menu */}
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 8,
+              border: "1px solid var(--border-subtle)",
+              background: "var(--bg-secondary)",
+              color: "var(--text-secondary)",
+              cursor: "pointer",
+              fontSize: 14,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <MoreHorizontal size={15} />
+          </button>
+          {menuOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: 34,
+                right: 0,
+                zIndex: 50,
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: 10,
+                padding: 4,
+                minWidth: 140,
+                boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+              }}
+            >
+              <button
+                onClick={() => { setMenuOpen(false); onEdit(); }}
+                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "7px 10px", fontSize: 12, textAlign: "left", border: "none", cursor: "pointer", background: "transparent", color: "var(--text-primary)", borderRadius: 6 }}
+              >
+                <Pencil size={12} /> Edit
+              </button>
+              {isPaused ? (
+                <button
+                  onClick={() => { setMenuOpen(false); onResume(); }}
+                  style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "7px 10px", fontSize: 12, textAlign: "left", border: "none", cursor: "pointer", background: "transparent", color: "#26c97a", borderRadius: 6 }}
+                >
+                  <Bell size={12} /> Resume
+                </button>
+              ) : (
+                <button
+                  onClick={() => { setMenuOpen(false); onPause(); }}
+                  style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "7px 10px", fontSize: 12, textAlign: "left", border: "none", cursor: "pointer", background: "transparent", color: "#f0b429", borderRadius: 6 }}
+                >
+                  <BellOff size={12} /> Pause
+                </button>
+              )}
+              <div style={{ height: 1, background: "var(--border-subtle)", margin: "4px 0" }} />
+              <button
+                onClick={() => { setMenuOpen(false); onDelete(); }}
+                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "7px 10px", fontSize: 12, textAlign: "left", border: "none", cursor: "pointer", background: "transparent", color: "#f05b5b", borderRadius: 6 }}
+              >
+                <Trash2 size={12} /> Delete
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Details grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 20px" }}>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 3 }}>
+            What you want
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+            {watch.quantity}x {watch.section_filter}
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 3 }}>
+            Max budget
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+            {maxPrice != null ? (
+              <>
+                ${maxPrice.toLocaleString()}/ticket
+                {totalBudget != null && (
+                  <span style={{ color: "var(--text-tertiary)", fontWeight: 400, marginLeft: 4 }}>
+                    (${totalBudget.toLocaleString()} total)
+                  </span>
+                )}
+              </>
+            ) : (
+              <span style={{ color: "var(--text-tertiary)" }}>—</span>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 3 }}>
+            Current cheapest
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>
+            {cheapest != null ? (
+              <span style={{ color: isUnderBudget ? "#26c97a" : "var(--text-primary)" }}>
+                ${cheapest.toLocaleString()}
+                {watch.last_cheapest_platform && (
+                  <span style={{ color: "var(--text-tertiary)", fontWeight: 400, marginLeft: 4 }}>
+                    · {watch.last_cheapest_platform}
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span style={{ color: "var(--text-muted)" }}>Not checked yet</span>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 3 }}>
+            Status
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: statusColor }}>
+            {statusDot} {statusLabel}
+          </div>
+        </div>
+      </div>
+
+      {/* Last checked */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+          Last checked: {timeAgo(watch.last_checked_at)}
+        </div>
+        {watch.alert_email && (
+          <div style={{ fontSize: 11, color: "var(--text-tertiary)", display: "flex", alignItems: "center", gap: 4, overflow: "hidden", maxWidth: "55%" }}>
+            <Bell size={10} style={{ flexShrink: 0 }} />
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{watch.alert_email}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Price history */}
+      {history.length > 0 && (
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", color: "var(--text-tertiary)", textTransform: "uppercase", marginBottom: 6 }}>
+            Recent prices
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {history.map((h, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  background: "var(--bg-tertiary)",
+                  border: "1px solid var(--border-subtle)",
+                  fontSize: 11,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                ${Number(h.price).toLocaleString()}
+                {h.platform && <span style={{ color: "var(--text-muted)", marginLeft: 3 }}>{h.platform}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Notes */}
+      {watch.notes && (
+        <div
+          style={{
+            fontSize: 12,
+            color: "var(--text-tertiary)",
+            background: "var(--bg-tertiary)",
+            borderRadius: 8,
+            padding: "8px 10px",
+            borderLeft: "3px solid var(--accent-purple)",
+          }}
+        >
+          {watch.notes}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Deal Log Types ───────────────────────────────────────────────────────────
 
 type DealStatus = "presented" | "bought" | "passed" | "sold" | "expired" | "missed";
@@ -779,12 +1328,16 @@ function DealStatusBadge({ status }: { status: DealStatus }) {
 }
 
 export default function FlipsPage() {
-  const [activeTab, setActiveTab] = useState<"flips" | "deals" | "rules">("flips");
+  const [activeTab, setActiveTab] = useState<"flips" | "deals" | "rules" | "watch">("flips");
   const [flips, setFlips] = useState<Flip[]>([]);
   const [deals, setDeals] = useState<DealLogEntry[]>([]);
+  const [watches, setWatches] = useState<TicketWatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [dealsLoading, setDealsLoading] = useState(false);
+  const [watchesLoading, setWatchesLoading] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
+  const [showAddWatch, setShowAddWatch] = useState(false);
+  const [editWatch, setEditWatch] = useState<TicketWatch | null>(null);
   const [editFlip, setEditFlip] = useState<Flip | null>(null);
   const [sellFlip, setSellFlip] = useState<Flip | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -837,11 +1390,103 @@ export default function FlipsPage() {
     }
   }, []);
 
+  const fetchWatches = useCallback(async () => {
+    setWatchesLoading(true);
+    try {
+      const res = await fetch("/api/ticket-watch");
+      if (res.ok) {
+        const data = await res.json();
+        setWatches(data);
+      }
+    } catch (e) {
+      console.error("fetch watches error:", e);
+    } finally {
+      setWatchesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchFlips();
     fetchDeals();
     fetchRules();
-  }, [fetchFlips, fetchDeals, fetchRules]);
+    fetchWatches();
+  }, [fetchFlips, fetchDeals, fetchRules, fetchWatches]);
+
+  // ── Watch CRUD ─────────────────────────────────────────────────────────────
+
+  const handleAddWatch = async (data: WatchFormData) => {
+    const res = await fetch("/api/ticket-watch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event_name: data.event_name,
+        venue: data.venue || null,
+        event_date: data.event_date || null,
+        section_filter: data.section_filter,
+        quantity: data.quantity,
+        max_price_per_ticket: data.max_price_per_ticket ? parseFloat(data.max_price_per_ticket) : null,
+        alert_email: data.alert_email || null,
+        notes: data.notes || null,
+      }),
+    });
+    if (res.ok) {
+      const w = await res.json();
+      setWatches((prev) => [w, ...prev]);
+    }
+  };
+
+  const handleEditWatch = async (data: WatchFormData) => {
+    if (!editWatch) return;
+    const res = await fetch("/api/ticket-watch", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: editWatch.id,
+        event_name: data.event_name,
+        venue: data.venue || null,
+        event_date: data.event_date || null,
+        section_filter: data.section_filter,
+        quantity: data.quantity,
+        max_price_per_ticket: data.max_price_per_ticket ? parseFloat(data.max_price_per_ticket) : null,
+        alert_email: data.alert_email || null,
+        notes: data.notes || null,
+      }),
+    });
+    if (res.ok) {
+      const w = await res.json();
+      setWatches((prev) => prev.map((x) => (x.id === editWatch.id ? w : x)));
+    }
+  };
+
+  const handleDeleteWatch = async (id: number) => {
+    if (!confirm("Delete this watch?")) return;
+    await fetch(`/api/ticket-watch?id=${id}`, { method: "DELETE" });
+    setWatches((prev) => prev.filter((w) => w.id !== id));
+  };
+
+  const handlePauseWatch = async (id: number) => {
+    const res = await fetch("/api/ticket-watch", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status: "paused" }),
+    });
+    if (res.ok) {
+      const w = await res.json();
+      setWatches((prev) => prev.map((x) => (x.id === id ? w : x)));
+    }
+  };
+
+  const handleResumeWatch = async (id: number) => {
+    const res = await fetch("/api/ticket-watch", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status: "watching" }),
+    });
+    if (res.ok) {
+      const w = await res.json();
+      setWatches((prev) => prev.map((x) => (x.id === id ? w : x)));
+    }
+  };
 
   const updateRule = async (field: string, value: unknown) => {
     setSavingRule(field);
@@ -1055,7 +1700,11 @@ export default function FlipsPage() {
           <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2, marginBottom: 0 }}>
             {activeTab === "flips"
               ? `${flips.length} flip${flips.length !== 1 ? "s" : ""} · Live P&L dashboard`
-              : `${deals.length} deal${deals.length !== 1 ? "s" : ""} found by scanner`}
+              : activeTab === "deals"
+              ? `${deals.length} deal${deals.length !== 1 ? "s" : ""} found by scanner`
+              : activeTab === "watch"
+              ? `${watches.length} watch${watches.length !== 1 ? "es" : ""} · Ticket price monitor`
+              : "Scanner rules & fee configuration"}
           </p>
         </div>
         {activeTab === "flips" && (
@@ -1063,11 +1712,16 @@ export default function FlipsPage() {
             <Plus size={14} />Add Flip
           </button>
         )}
+        {activeTab === "watch" && (
+          <button onClick={() => setShowAddWatch(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 6, fontSize: 14, fontWeight: 500, background: "var(--accent-purple)", color: "white", border: "none", cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+            <Plus size={14} />Add Watch
+          </button>
+        )}
       </div>
 
       {/* Tab switcher */}
-      <div style={{ display: "flex", gap: "8px", padding: isMobile ? "0 14px 12px" : "0 24px 16px", borderBottom: "1px solid var(--border-subtle)", flexShrink: 0 }}>
-        {([["flips", "Active Flips"], ["deals", "Deal Log"], ["rules", "Rules & Criteria"]] as const).map(([key, label]) => (
+      <div style={{ display: "flex", gap: "8px", padding: isMobile ? "0 14px 12px" : "0 24px 16px", borderBottom: "1px solid var(--border-subtle)", flexShrink: 0, overflowX: "auto", WebkitOverflowScrolling: "touch" as React.CSSProperties["WebkitOverflowScrolling"] }}>
+        {([["flips", "Active Flips"], ["deals", "Deal Log"], ["rules", "Rules & Criteria"], ["watch", "Ticket Watch"]] as const).map(([key, label]) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
@@ -1081,6 +1735,7 @@ export default function FlipsPage() {
               background: activeTab === key ? "var(--accent-purple)" : "var(--bg-elevated)",
               color: activeTab === key ? "#fff" : "var(--text-secondary)",
               transition: "all 0.15s",
+              whiteSpace: "nowrap",
             }}
           >
             {label}
@@ -1089,9 +1744,60 @@ export default function FlipsPage() {
                 {deals.filter(d => d.status === "presented").length}
               </span>
             )}
+            {key === "watch" && watches.filter(w => {
+              const cheapest = w.last_cheapest_price != null ? Number(w.last_cheapest_price) : null;
+              const max = w.max_price_per_ticket != null ? Number(w.max_price_per_ticket) : null;
+              return cheapest != null && max != null && cheapest <= max && w.status === "watching";
+            }).length > 0 && (
+              <span style={{ marginLeft: "6px", background: "#26c97a", color: "#0f0f10", fontSize: "10px", fontWeight: 700, padding: "1px 6px", borderRadius: "8px" }}>
+                🟢
+              </span>
+            )}
           </button>
         ))}
       </div>
+
+      {/* ════════ TICKET WATCH TAB ════════ */}
+      {activeTab === "watch" && (
+        <div style={{ flex: 1, overflow: "auto", padding: isMobile ? "12px 14px" : "20px 24px" }}>
+          {watchesLoading ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 160, fontSize: 14, color: "var(--text-tertiary)" }}>
+              Loading...
+            </div>
+          ) : watches.length === 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 200, borderRadius: 14, border: "1px dashed var(--border-default)", gap: 12, color: "var(--text-muted)" }}>
+              <Eye size={32} style={{ opacity: 0.4 }} />
+              <p style={{ fontSize: 14, margin: 0 }}>No ticket watches yet</p>
+              <button
+                onClick={() => setShowAddWatch(true)}
+                style={{ padding: "8px 20px", borderRadius: 8, fontSize: 13, fontWeight: 600, background: "var(--accent-purple)", color: "white", border: "none", cursor: "pointer" }}
+              >
+                + Add Watch
+              </button>
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
+                gap: 16,
+                alignItems: "start",
+              }}
+            >
+              {watches.map((watch) => (
+                <TicketWatchCard
+                  key={watch.id}
+                  watch={watch}
+                  onEdit={() => setEditWatch(watch)}
+                  onDelete={() => handleDeleteWatch(watch.id)}
+                  onPause={() => handlePauseWatch(watch.id)}
+                  onResume={() => handleResumeWatch(watch.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ════════ RULES TAB ════════ */}
       {activeTab === "rules" && (
@@ -2020,6 +2726,21 @@ export default function FlipsPage() {
           flip={sellFlip}
           onClose={() => setSellFlip(null)}
           onConfirm={(price) => handleMarkSold(sellFlip, price)}
+        />
+      )}
+
+      {showAddWatch && (
+        <WatchModal
+          onClose={() => setShowAddWatch(false)}
+          onSave={handleAddWatch}
+        />
+      )}
+
+      {editWatch && (
+        <WatchModal
+          onClose={() => setEditWatch(null)}
+          onSave={handleEditWatch}
+          initial={editWatch}
         />
       )}
     </div>

@@ -26,6 +26,7 @@ const TABLE_NAMES = [
   "mc_email_events",
   "mc_live_agents",
   "mc_agent_status",
+  "mc_ticket_watch",
 ];
 
 const MIGRATIONS: string[] = [
@@ -282,6 +283,25 @@ const MIGRATIONS: string[] = [
     status TEXT DEFAULT 'standby' NOT NULL,
     status_text TEXT,
     last_active_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ DEFAULT now()
+  )`,
+  `CREATE TABLE IF NOT EXISTS mc_ticket_watch (
+    id SERIAL PRIMARY KEY,
+    event_name TEXT NOT NULL,
+    venue TEXT,
+    event_date TEXT,
+    section_filter TEXT DEFAULT 'Floor GA',
+    quantity INTEGER DEFAULT 2,
+    max_price_per_ticket NUMERIC,
+    alert_email TEXT,
+    alert_telegram BOOLEAN DEFAULT true,
+    status TEXT DEFAULT 'watching',
+    notes TEXT,
+    last_checked_at TIMESTAMPTZ,
+    last_cheapest_price NUMERIC,
+    last_cheapest_platform TEXT,
+    price_history JSONB DEFAULT '[]',
+    created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
   )`,
 ];
