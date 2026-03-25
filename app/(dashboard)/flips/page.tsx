@@ -2358,7 +2358,10 @@ export default function FlipsPage() {
                 {rules.auto_list_enabled ? "Disable" : "Enable"}
               </button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "10px", opacity: rules.auto_list_enabled ? 1 : 0.5 }}>
+            <div style={{ fontSize: "11px", color: "var(--text-tertiary)", marginBottom: "4px", fontStyle: "italic" }}>
+              These pricing rules are also used by the Listing Monitor to auto-adjust existing listings.
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "10px" }}>
               <div style={{ padding: "10px 12px", borderRadius: "8px", background: "var(--bg-primary)" }}>
                 <div style={{ fontSize: "11px", color: "var(--text-tertiary)", marginBottom: "4px" }}>Platforms to List On</div>
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
@@ -2374,7 +2377,7 @@ export default function FlipsPage() {
                     return (
                       <button
                         key={p.id}
-                        disabled={!rules.auto_list_enabled || !p.ready}
+                        disabled={!p.ready}
                         onClick={() => {
                           if (!p.ready) return;
                           const updated = active ? current.filter(x => x !== p.id) : [...current, p.id];
@@ -2383,7 +2386,7 @@ export default function FlipsPage() {
                         title={!p.ready ? "Seller access pending" : undefined}
                         style={{
                           padding: "4px 12px", borderRadius: "6px", fontSize: "12px", fontWeight: 600,
-                          border: "none", cursor: rules.auto_list_enabled && p.ready ? "pointer" : "not-allowed",
+                          border: "none", cursor: p.ready ? "pointer" : "not-allowed",
                           background: active ? "#3b82f618" : "var(--bg-secondary)",
                           color: active ? "#3b82f6" : "var(--text-tertiary)",
                           opacity: p.ready ? 1 : 0.4,
@@ -2402,11 +2405,10 @@ export default function FlipsPage() {
                   {(["dollars", "percent"] as const).map((m) => (
                     <button
                       key={m}
-                      disabled={!rules.auto_list_enabled}
                       onClick={() => updateRule("auto_list_undercut_mode", m)}
                       style={{
                         padding: "4px 12px", borderRadius: "6px", fontSize: "11px", fontWeight: 600,
-                        border: "none", cursor: rules.auto_list_enabled ? "pointer" : "not-allowed",
+                        border: "none", cursor: "pointer",
                         background: rules.auto_list_undercut_mode === m ? "#3b82f6" : "var(--bg-secondary)",
                         color: rules.auto_list_undercut_mode === m ? "#fff" : "var(--text-tertiary)",
                       }}
@@ -2421,7 +2423,6 @@ export default function FlipsPage() {
                     <input
                       type="number"
                       defaultValue={Number(rules.auto_list_undercut_dollars)}
-                      disabled={!rules.auto_list_enabled}
                       onBlur={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) updateRule("auto_list_undercut_dollars", v); }}
                       style={{ width: "60px", padding: "4px 8px", borderRadius: "6px", border: "1px solid var(--border-subtle)", background: "var(--bg-secondary)", color: "var(--accent-purple)", fontSize: "14px", fontWeight: 600, textAlign: "right", outline: "none" }}
                     />
@@ -2432,7 +2433,6 @@ export default function FlipsPage() {
                     <input
                       type="number"
                       defaultValue={Number(rules.auto_list_undercut_pct)}
-                      disabled={!rules.auto_list_enabled}
                       onBlur={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) updateRule("auto_list_undercut_pct", v); }}
                       style={{ width: "60px", padding: "4px 8px", borderRadius: "6px", border: "1px solid var(--border-subtle)", background: "var(--bg-secondary)", color: "var(--accent-purple)", fontSize: "14px", fontWeight: 600, textAlign: "right", outline: "none" }}
                     />
@@ -2447,15 +2447,18 @@ export default function FlipsPage() {
                 </div>
               </div>
             </div>
-            {rules.auto_list_enabled && (
-              <div style={{ marginTop: "12px", padding: "10px 14px", borderRadius: "8px", background: "#3b82f610", border: "1px solid #3b82f630", fontSize: "12px", color: "#3b82f6" }}>
-                After purchase → list on <strong>{String(rules.auto_list_platforms || "stubhub").split(",").map(p => p === "stubhub" ? "StubHub" : p === "vivid" ? "Vivid Seats" : "SeatGeek").join(", ")}</strong> at{" "}
-                {rules.auto_list_undercut_mode === "dollars"
-                  ? <><strong>{"$"}{String(rules.auto_list_undercut_dollars)}</strong> below cheapest competitor</>
-                  : <><strong>{String(rules.auto_list_undercut_pct)}%</strong> below cheapest competitor</>
-                }
-              </div>
-            )}
+            <div style={{ marginTop: "12px", padding: "10px 14px", borderRadius: "8px", background: "#3b82f610", border: "1px solid #3b82f630", fontSize: "12px", color: "#3b82f6" }}>
+              <strong>Pricing rule (auto-list + listing monitor):</strong> Price at{" "}
+              {rules.auto_list_undercut_mode === "dollars"
+                ? <><strong>{"$"}{String(rules.auto_list_undercut_dollars)}</strong> below cheapest competitor</>
+                : <><strong>{String(rules.auto_list_undercut_pct)}%</strong> below cheapest competitor</>
+              }
+              {" "}on {String(rules.auto_list_platforms || "stubhub").split(",").map(p => p === "stubhub" ? "StubHub" : p === "vivid" ? "Vivid Seats" : "SeatGeek").join(", ")}
+              {rules.auto_list_enabled
+                ? <span style={{ color: "#26c97a" }}> · Auto-list ON</span>
+                : <span style={{ color: "var(--text-muted)" }}> · Auto-list OFF (monitor still uses these rules)</span>
+              }
+            </div>
           </div>
 
           {rules.updated_at && (
