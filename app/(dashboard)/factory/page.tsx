@@ -1207,57 +1207,7 @@ export default function AgentFactoryPage() {
           </div>
         </div>
 
-        {/* ── Standby agents bar ──────────────────────────────────────────── */}
-        {agents.filter((a) => a.status === "standby" || a.status === "scheduled").length > 0 && (
-          <div
-            style={{
-              flexShrink: 0,
-              padding: isMobile ? "8px 14px" : "8px 24px",
-              borderBottom: "1px solid var(--border-subtle)",
-              background: "var(--bg-elevated)",
-              display: "flex",
-              alignItems: isMobile ? "flex-start" : "center",
-              gap: "8px",
-              flexWrap: "wrap",
-              overflowX: "visible",
-            }}
-          >
-            <span style={{ fontSize: "12px", color: "#ffffff", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
-              STANDBY:
-            </span>
-            {agents
-              .filter((a) => a.status === "standby" || a.status === "scheduled")
-              .map((agent) => (
-                <div
-                  key={agent.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "6px 12px",
-                    background: "var(--bg-secondary)",
-                    border: "1px solid var(--border-subtle)",
-                    borderRadius: "4px",
-                    flexShrink: 0,
-                  }}
-                >
-                  <span style={{ fontSize: "18px" }}>{agent.emoji}</span>
-                  <div>
-                    <div style={{ fontSize: "13px", color: "#ffffff", fontWeight: 600 }}>{agent.name}</div>
-                    <div style={{ fontSize: "11px", color: agent.status === "scheduled" ? "#f0b429" : "#ffffff", opacity: agent.status === "scheduled" ? 1 : 0.6, letterSpacing: "0.05em" }}>
-                      {agent.status === "scheduled" ? "⏰ SCHEDULED" : "💤 STANDBY"}
-                    </div>
-                    {agent.statusText && (
-                      <div style={{ fontSize: "9px", color: "#888888", marginTop: 2 }}>{agent.statusText}</div>
-                    )}
-                    {agent.model && (
-                      <div style={{ fontSize: "9px", color: "#ffffff", marginTop: 2 }}>{agent.model}</div>
-                    )}
-                  </div>
-                </div>
-              ))}
-          </div>
-        )}
+        {/* Standby row removed — merged into DEDICATED AGENTS row below */}
 
         {/* ── Primary agents roster (primary only) ── */}
         {liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent").length > 0 && (
@@ -1323,63 +1273,74 @@ export default function AgentFactoryPage() {
           </div>
         )}
 
-        {/* ── Dedicated agents roster ── */}
-        {liveAgents.filter(a => a.role === "Dedicated Agent").length > 0 && (
-          <div
-            style={{
-              flexShrink: 0,
-              padding: isMobile ? "10px 14px" : "10px 24px",
-              borderBottom: "1px solid var(--border-subtle)",
-              background: "linear-gradient(135deg, #0a1520 0%, #101525 100%)",
-              display: "flex",
-              alignItems: isMobile ? "flex-start" : "center",
-              gap: "10px",
-              flexWrap: "wrap",
-              overflowX: "auto",
-            }}
-          >
-            <span style={{ fontSize: "12px", color: "#4d7cfe", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
-              DEDICATED AGENTS:
-            </span>
-            {liveAgents.filter(a => a.role === "Dedicated Agent").map((agent) => (
-              <div
-                key={agent.id}
-                onClick={() => setSelectedAgent(agent)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "6px 12px",
-                  background: "linear-gradient(135deg, #0f1a2e 0%, #1a1040 100%)",
-                  border: "1px solid #4d7cfe50",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                <span style={{ fontSize: "18px" }}>{agent.emoji}</span>
-                <div>
-                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", letterSpacing: "0.04em" }}>
-                    {agent.name}
-                    <span style={{ marginLeft: "6px", fontSize: "8px", color: "#4d7cfe", background: "#4d7cfe18", border: "1px solid #4d7cfe40", padding: "1px 5px", borderRadius: "3px", fontWeight: 700, letterSpacing: "0.08em" }}>
-                      DEDICATED
-                    </span>
-                    {agent.model && (
-                      <span style={{ marginLeft: "6px", fontSize: "9px", color: agent.model?.includes("opus") ? "#f0b429" : agent.model?.includes("haiku") ? "#26c97a" : "#7c5cfc", background: (agent.model?.includes("opus") ? "#f0b429" : agent.model?.includes("haiku") ? "#26c97a" : "#7c5cfc") + "18", border: `1px solid ${agent.model?.includes("opus") ? "#f0b429" : agent.model?.includes("haiku") ? "#26c97a" : "#7c5cfc"}40`, padding: "1px 6px", borderRadius: "8px", fontWeight: 700 }}>
-                        {agent.model}
-                      </span>
-                    )}
+        {/* ── Dedicated agents roster (includes standby/scheduled from team + dedicated from factory) ── */}
+        {(() => {
+          const dedicatedFromFactory = liveAgents.filter(a => a.role === "Dedicated Agent");
+          const standbyFromTeam = agents.filter(a => a.status === "standby" || a.status === "scheduled");
+          const allDedicated = [
+            ...dedicatedFromFactory.map(a => ({ ...a, source: "factory" as const })),
+            ...standbyFromTeam.map(a => ({
+              id: a.id, name: a.name, emoji: a.emoji, role: a.role,
+              model: a.model, status: a.status, taskSummary: a.description || a.statusText || "",
+              source: "team" as const,
+            })),
+          ];
+          if (allDedicated.length === 0) return null;
+          return (
+            <div
+              style={{
+                flexShrink: 0,
+                padding: isMobile ? "10px 14px" : "10px 24px",
+                borderBottom: "1px solid var(--border-subtle)",
+                background: "var(--bg-elevated)",
+                display: "flex",
+                alignItems: isMobile ? "flex-start" : "center",
+                gap: "8px",
+                flexWrap: "wrap",
+                overflowX: "auto",
+              }}
+            >
+              <span style={{ fontSize: "12px", color: "#4d7cfe", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
+                DEDICATED AGENTS:
+              </span>
+              {allDedicated.map((agent) => {
+                const statusColor = agent.status === "active" ? "#26c97a" : agent.status === "scheduled" ? "#f0b429" : "#ffffff";
+                const statusText = agent.status === "active" ? "● RUNNING" : agent.status === "scheduled" ? "⏰ SCHEDULED" : "💤 STANDBY";
+                const statusOpacity = agent.status === "active" ? 1 : agent.status === "scheduled" ? 1 : 0.6;
+                const modelStr = agent.model || "";
+                const modelColor = modelStr.includes("opus") ? "#f0b429" : modelStr.includes("haiku") ? "#26c97a" : "#7c5cfc";
+                return (
+                  <div
+                    key={agent.id}
+                    onClick={() => agent.source === "factory" ? setSelectedAgent(agent as LiveAgent) : null}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "6px 12px",
+                      background: "var(--bg-secondary)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: "4px",
+                      flexShrink: 0,
+                      cursor: agent.source === "factory" ? "pointer" : "default",
+                    }}
+                  >
+                    <span style={{ fontSize: "18px" }}>{agent.emoji}</span>
+                    <div>
+                      <div style={{ fontSize: "13px", color: "#ffffff", fontWeight: 600 }}>{agent.name}</div>
+                      <div style={{ fontSize: "11px", color: statusColor, opacity: statusOpacity, letterSpacing: "0.05em" }}>
+                        {statusText}
+                      </div>
+                      {modelStr && (
+                        <div style={{ fontSize: "9px", color: modelColor, marginTop: 2 }}>{modelStr}</div>
+                      )}
+                    </div>
                   </div>
-                  {agent.taskSummary && (
-                    <div style={{ fontSize: "9px", color: "#888888", marginTop: 2, maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.taskSummary}</div>
-                  )}
-                </div>
-                <div style={{ fontSize: "9px", color: agent.status === "active" ? "#26c97a" : "#f0b429", fontWeight: 700 }}>
-                  {agent.status === "active" ? "● RUNNING" : "○ IDLE"}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {/* ── Factory floor ──────────────────────────────────────────────── */}
         {isMobile ? (
