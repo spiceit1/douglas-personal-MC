@@ -34,6 +34,16 @@ NEXT_PUBLIC_INSTANCE=personal
 
 > **For the AI agent:** You cannot create the Neon database or Netlify site yourself — the human owner needs to do two quick things first. Ask them clearly, then you handle the rest.
 
+### Step 0: Ask your human what type of instance this is
+
+Before anything else, ask:
+
+> "Is this Mission Control instance for **personal** use or **business** use?
+> - **Personal** = full features (flip tracker, deal scanner, ticket watch, etc.)
+> - **Business** = clean dashboard for working with partners (no personal trading features)"
+
+Their answer determines the `NEXT_PUBLIC_INSTANCE` value you'll set later: `personal` or `biz`.
+
 ### Step 1: Ask your human to create a Neon database
 
 Send them this message:
