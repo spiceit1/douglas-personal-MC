@@ -105,13 +105,13 @@ export async function GET() {
       (a: Record<string, unknown>) => a.status === "standby" || a.status === "scheduled"
     ).length;
 
-    const factoryActive = liveAgents.filter(
+    const allActive = liveAgents.filter(
       (a: Record<string, unknown>) => a.status === "active"
     ).length;
 
-    const totalVisible = liveAgents.filter(
-      (a: Record<string, unknown>) => a.status === "active" || a.status === "completed"
-    ).length + teamDedicated;
+    const totalVisible = allActive + teamDedicated + liveAgents.filter(
+      (a: Record<string, unknown>) => a.status === "completed"
+    ).length;
 
     return NextResponse.json({
       tasks,
@@ -121,9 +121,9 @@ export async function GET() {
       stats: {
         activeTasks,
         completedToday,
-        activeAgents: factoryActive,
+        activeAgents: allActive,
         totalAgents: totalVisible,
-        liveAgentCount: factoryActive,
+        liveAgentCount: allActive,
       },
     });
   } catch (e) {

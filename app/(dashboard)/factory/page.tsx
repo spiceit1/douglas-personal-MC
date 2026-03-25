@@ -788,9 +788,9 @@ function MobileZoneSection({
           )}
 
           {/* Sub-agents working in this zone (primary agents shown in AGENTS row, not here) */}
-          {zoneLiveAgents.filter(a => a.role === "Sub-Agent").length > 0 && (
+          {zoneLiveAgents.filter(a => a.role === "Sub-Agent" || (a.role === "Dedicated Agent" && a.status === "active")).length > 0 && (
             <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "8px", padding: "12px 8px 8px", borderBottom: `1px solid var(--border-subtle)` }}>
-              {zoneLiveAgents.filter(a => a.role === "Sub-Agent").map((agent) => (
+              {zoneLiveAgents.filter(a => a.role === "Sub-Agent" || (a.role === "Dedicated Agent" && a.status === "active")).map((agent) => (
                 <LiveAgentCard key={agent.id} agent={agent} onSelect={onSelectAgent || (() => {})} />
               ))}
             </div>
@@ -930,7 +930,7 @@ function FactoryZone({
       )}
 
       {/* Sub-agents working in this zone (primary agents shown in AGENTS row) */}
-      {zoneLiveAgents.filter(a => a.role === "Sub-Agent").length > 0 && (
+      {zoneLiveAgents.filter(a => a.role === "Sub-Agent" || (a.role === "Dedicated Agent" && a.status === "active")).length > 0 && (
         <div
           style={{
             display: "flex",
@@ -941,7 +941,7 @@ function FactoryZone({
             borderBottom: `1px solid var(--border-subtle)`,
           }}
         >
-          {zoneLiveAgents.filter(a => a.role === "Sub-Agent").map((agent) => (
+          {zoneLiveAgents.filter(a => a.role === "Sub-Agent" || (a.role === "Dedicated Agent" && a.status === "active")).map((agent) => (
             <LiveAgentCard key={agent.id} agent={agent} onSelect={onSelectAgent || (() => {})} />
           ))}
         </div>
@@ -1309,8 +1309,8 @@ export default function AgentFactoryPage() {
                 <span title="Always-on agents with a single purpose. Run on a schedule (e.g. every 20 min). Stay here whether running, idle, or standby.">DEDICATED AGENTS:</span>
               </span>
               {allDedicated.map((agent) => {
-                const statusColor = agent.status === "active" ? "#26c97a" : agent.status === "scheduled" ? "#f0b429" : "#ffffff";
-                const statusText = agent.status === "active" ? "● RUNNING" : agent.status === "scheduled" ? "⏰ SCHEDULED" : "💤 STANDBY";
+                const statusColor = agent.status === "active" ? "#26c97a" : agent.status === "idle" ? "#9898a0" : agent.status === "scheduled" ? "#f0b429" : "#ffffff";
+                const statusText = agent.status === "active" ? "● RUNNING" : agent.status === "idle" ? "○ IDLE" : agent.status === "scheduled" ? "⏰ SCHEDULED" : "💤 STANDBY";
                 const statusOpacity = agent.status === "active" ? 1 : agent.status === "scheduled" ? 1 : 0.6;
                 const modelStr = agent.model || "";
                 const modelColor = modelStr.includes("opus") ? "#f0b429" : modelStr.includes("haiku") ? "#26c97a" : "#7c5cfc";

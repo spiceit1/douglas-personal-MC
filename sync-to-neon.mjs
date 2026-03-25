@@ -403,7 +403,7 @@ async function syncAgentStatus() {
           const statusText = nextScanMins === 0
             ? "IDLE — scan due now"
             : `IDLE — next scan in ${nextScanMins}m`;
-          await sql`UPDATE mc_factory_agents SET status='active', task_summary=${statusText}, updated_at=NOW() WHERE id='scout'`;
+          await sql`UPDATE mc_factory_agents SET status='idle', task_summary=${statusText}, updated_at=NOW() WHERE id='scout'`;
         }
       }
     } catch {
