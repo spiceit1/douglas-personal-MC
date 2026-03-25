@@ -749,10 +749,10 @@ function MobileZoneSection({
             </div>
           )}
 
-          {/* Live agents row */}
-          {zoneLiveAgents.length > 0 && (
+          {/* Sub-agents working in this zone (primary agents shown in AGENTS row, not here) */}
+          {zoneLiveAgents.filter(a => a.role === "Sub-Agent").length > 0 && (
             <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "8px", padding: "12px 8px 8px", borderBottom: `1px solid var(--border-subtle)` }}>
-              {zoneLiveAgents.map((agent) => (
+              {zoneLiveAgents.filter(a => a.role === "Sub-Agent").map((agent) => (
                 <LiveAgentCard key={agent.id} agent={agent} onSelect={onSelectAgent || (() => {})} />
               ))}
             </div>
@@ -891,8 +891,8 @@ function FactoryZone({
         </div>
       )}
 
-      {/* Live agents row */}
-      {zoneLiveAgents.length > 0 && (
+      {/* Sub-agents working in this zone (primary agents shown in AGENTS row) */}
+      {zoneLiveAgents.filter(a => a.role === "Sub-Agent").length > 0 && (
         <div
           style={{
             display: "flex",
@@ -903,7 +903,7 @@ function FactoryZone({
             borderBottom: `1px solid var(--border-subtle)`,
           }}
         >
-          {zoneLiveAgents.map((agent) => (
+          {zoneLiveAgents.filter(a => a.role === "Sub-Agent").map((agent) => (
             <LiveAgentCard key={agent.id} agent={agent} onSelect={onSelectAgent || (() => {})} />
           ))}
         </div>
@@ -1226,8 +1226,8 @@ export default function AgentFactoryPage() {
           </div>
         )}
 
-        {/* ── Active agents roster ─────────────────────────────────────── */}
-        {liveAgents.length > 0 && (
+        {/* ── Active agents roster (primary agents only, not sub-agents) ── */}
+        {liveAgents.filter(a => a.role !== "Sub-Agent").length > 0 && (
           <div
             style={{
               flexShrink: 0,
@@ -1244,7 +1244,7 @@ export default function AgentFactoryPage() {
             <span style={{ fontSize: "12px", color: "#ffffff", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
               AGENTS:
             </span>
-            {liveAgents.map((agent) => (
+            {liveAgents.filter(a => a.role !== "Sub-Agent").map((agent) => (
               <div
                 key={agent.id}
                 onClick={() => setSelectedAgent(agent)}
