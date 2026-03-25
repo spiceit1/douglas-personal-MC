@@ -742,6 +742,7 @@ interface TicketWatch {
   last_checked_at: string | null;
   last_cheapest_price: number | null;
   last_cheapest_platform: string | null;
+  last_cheapest_url: string | null;
   price_history: Array<{ price: number; platform: string; checked_at: string }>;
   created_at: string;
   updated_at: string;
@@ -1191,14 +1192,31 @@ function TicketWatchCard({
           </div>
           <div style={{ fontSize: 13, fontWeight: 600 }}>
             {cheapest != null ? (
-              <span style={{ color: isUnderBudget ? "#26c97a" : "var(--text-primary)" }}>
-                ${cheapest.toLocaleString()}
-                {watch.last_cheapest_platform && (
-                  <span style={{ color: "var(--text-tertiary)", fontWeight: 400, marginLeft: 4 }}>
-                    · {watch.last_cheapest_platform}
-                  </span>
-                )}
-              </span>
+              watch.last_cheapest_url ? (
+                <a
+                  href={watch.last_cheapest_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: isUnderBudget ? "#26c97a" : "#3b82f6", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}
+                >
+                  ${cheapest.toLocaleString()}
+                  {watch.last_cheapest_platform && (
+                    <span style={{ color: "var(--text-tertiary)", fontWeight: 400 }}>
+                      · {watch.last_cheapest_platform}
+                    </span>
+                  )}
+                  <ExternalLink size={11} style={{ flexShrink: 0, opacity: 0.7 }} />
+                </a>
+              ) : (
+                <span style={{ color: isUnderBudget ? "#26c97a" : "var(--text-primary)" }}>
+                  ${cheapest.toLocaleString()}
+                  {watch.last_cheapest_platform && (
+                    <span style={{ color: "var(--text-tertiary)", fontWeight: 400, marginLeft: 4 }}>
+                      · {watch.last_cheapest_platform}
+                    </span>
+                  )}
+                </span>
+              )
             ) : (
               <span style={{ color: "var(--text-muted)" }}>Not checked yet</span>
             )}

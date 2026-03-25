@@ -70,7 +70,7 @@ export async function PATCH(req: NextRequest) {
       "event_name", "venue", "event_date", "section_filter", "quantity",
       "max_price_per_ticket", "alert_email", "alert_telegram", "status",
       "notes", "last_checked_at", "last_cheapest_price", "last_cheapest_platform",
-      "price_history",
+      "last_cheapest_url", "price_history",
     ];
 
     for (const key of allowed) {
