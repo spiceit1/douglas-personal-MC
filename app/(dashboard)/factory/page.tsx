@@ -1259,8 +1259,8 @@ export default function AgentFactoryPage() {
           </div>
         )}
 
-        {/* ── Active agents roster (primary + dedicated agents, not sub-agents) ── */}
-        {liveAgents.filter(a => a.role !== "Sub-Agent").length > 0 && (
+        {/* ── Primary agents roster (primary only) ── */}
+        {liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent").length > 0 && (
           <div
             style={{
               flexShrink: 0,
@@ -1277,7 +1277,7 @@ export default function AgentFactoryPage() {
             <span style={{ fontSize: "12px", color: "#ffffff", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
               PRIMARY AGENTS:
             </span>
-            {liveAgents.filter(a => a.role !== "Sub-Agent").map((agent) => (
+            {liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent").map((agent) => (
               <div
                 key={agent.id}
                 onClick={() => setSelectedAgent(agent)}
@@ -1310,6 +1310,59 @@ export default function AgentFactoryPage() {
                   {agent.taskSummary && (
                     <div style={{ fontSize: "9px", color: "#888888", marginTop: 2, maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.taskSummary}</div>
                   )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Dedicated agents roster ── */}
+        {liveAgents.filter(a => a.role === "Dedicated Agent").length > 0 && (
+          <div
+            style={{
+              flexShrink: 0,
+              padding: isMobile ? "10px 14px" : "10px 24px",
+              borderBottom: "1px solid var(--border-subtle)",
+              background: "linear-gradient(135deg, #0a1520 0%, #101525 100%)",
+              display: "flex",
+              alignItems: isMobile ? "flex-start" : "center",
+              gap: "10px",
+              flexWrap: "wrap",
+              overflowX: "auto",
+            }}
+          >
+            <span style={{ fontSize: "12px", color: "#4d7cfe", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
+              DEDICATED AGENTS:
+            </span>
+            {liveAgents.filter(a => a.role === "Dedicated Agent").map((agent) => (
+              <div
+                key={agent.id}
+                onClick={() => setSelectedAgent(agent)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "6px 12px",
+                  background: "linear-gradient(135deg, #0f1a2e 0%, #1a1040 100%)",
+                  border: "1px solid #4d7cfe50",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                <span style={{ fontSize: "18px" }}>{agent.emoji}</span>
+                <div>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", letterSpacing: "0.04em" }}>
+                    {agent.name}
+                    <span style={{ marginLeft: "6px", fontSize: "8px", color: "#4d7cfe", background: "#4d7cfe18", border: "1px solid #4d7cfe40", padding: "1px 5px", borderRadius: "3px", fontWeight: 700, letterSpacing: "0.08em" }}>
+                      DEDICATED
+                    </span>
+                  </div>
+                  {agent.taskSummary && (
+                    <div style={{ fontSize: "9px", color: "#888888", marginTop: 2, maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.taskSummary}</div>
+                  )}
+                </div>
+                <div style={{ fontSize: "9px", color: agent.status === "active" ? "#26c97a" : "#f0b429", fontWeight: 700 }}>
+                  {agent.status === "active" ? "● RUNNING" : "○ IDLE"}
                 </div>
               </div>
             ))}
