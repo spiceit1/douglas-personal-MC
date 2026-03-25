@@ -32,37 +32,69 @@ NEXT_PUBLIC_INSTANCE=personal
 
 ## First-Time Setup
 
-### 1. Deploy to Netlify
+> **For the AI agent:** You cannot create the Neon database or Netlify site yourself — the human owner needs to do two quick things first. Ask them clearly, then you handle the rest.
+
+### Step 1: Ask your human to create a Neon database
+
+Send them this message:
+
+> "I need you to create a database for Mission Control. It takes 2 minutes:
+> 1. Go to **neon.tech** and sign in (or create a free account)
+> 2. Click **New Project**
+> 3. Name it anything (e.g. 'mission-control')
+> 4. Pick the region closest to you
+> 5. Click **Create Project**
+> 6. You'll see a **connection string** that starts with `postgresql://` — copy the whole thing and send it to me
+>
+> That's all I need. I'll handle everything else."
+
+Save the connection string they give you — this is your `DATABASE_URL`.
+
+### Step 2: Ask your human to create a Netlify site
+
+Send them this message:
+
+> "I also need a Netlify account to host the dashboard:
+> 1. Go to **app.netlify.com** and sign in (or create a free account)
+> 2. Go to **User Settings → Applications → Personal access tokens**
+> 3. Click **New access token**, name it 'openclaw', and click **Generate**
+> 4. Copy the token (starts with `nfp_`) and send it to me
+>
+> I'll create the site and deploy everything automatically."
+
+Once you have the Netlify token, create the site yourself:
+```bash
+NETLIFY_AUTH_TOKEN=<token> npx netlify-cli sites:create --name <pick-a-name>
+```
+
+### Step 3: Clone and deploy
 
 ```bash
-# Clone the repo
-git clone <repo-url>
+git clone https://github.com/spiceit1/openclaw-mission-control.git
 cd mission-control
-
-# Install dependencies
 npm install
-
-# (Optional) Run locally
-npm run dev
 ```
 
-For production: connect the repo to a Netlify site, or deploy manually:
+Deploy to Netlify with the DATABASE_URL set:
 ```bash
-npx netlify-cli deploy --prod --site <your-site-id>
+# Set env vars on the Netlify site
+NETLIFY_AUTH_TOKEN=<token> npx netlify-cli env:set DATABASE_URL "<connection-string>" --site <site-id>
+NETLIFY_AUTH_TOKEN=<token> npx netlify-cli env:set NEXT_PUBLIC_INSTANCE "personal" --site <site-id>
+
+# Deploy
+NETLIFY_AUTH_TOKEN=<token> npx netlify-cli deploy --prod --site <site-id>
 ```
 
-### 2. Set Environment Variables
-
-In Netlify → Site Settings → Environment Variables, add `DATABASE_URL` and `NEXT_PUBLIC_INSTANCE`.
-
-### 3. Bootstrap the Database
+### Step 4: Bootstrap the database
 
 Visit `/setup` on your deployed site:
 
 1. **Verify DB connection** — the status card should show "Connected"
 2. **Click "Run Migration"** — creates all 22 `mc_` tables in your Neon DB
-3. **Click "Seed Defaults"** — inserts base config rows (team roster, scanner rules, cron config, etc.)
+3. **Click "Seed Defaults"** — inserts base config rows (team roster, scanner rules, etc.)
 4. All pages will now work correctly
+
+> **That's it.** The human did 2 things (Neon + Netlify tokens). The agent did everything else.
 
 ---
 
@@ -90,19 +122,16 @@ Visit `/setup` on your deployed site:
 
 ## Creating a New Instance
 
-To spin up a second instance (e.g. for a business account):
+To spin up a second instance (e.g. for a business partner):
 
-1. **Create a new Neon project** — get a fresh connection string
-2. **Create a new Netlify site** — deploy this codebase to it
-3. **Set env vars on the new site:**
-   ```env
-   DATABASE_URL=postgresql://...your-new-neon-db...
-   NEXT_PUBLIC_INSTANCE=biz
-   ```
-4. **Visit `/setup` on the new site** → Run Migration → Seed Defaults
-5. Done — fully independent instance with its own database
+1. **Ask the human** for a new Neon connection string and Netlify token (same steps as first-time setup above)
+2. **Create a new Netlify site** using the token
+3. **Set env vars** — use `NEXT_PUBLIC_INSTANCE=biz` for business instances
+4. **Deploy** the same codebase
+5. **Visit `/setup`** → Run Migration → Seed Defaults
+6. Done — fully independent instance with its own database
 
-> **Biz instance note:** When `NEXT_PUBLIC_INSTANCE=biz`, scanner/ticket features are hidden from the UI to keep it clean for business use.
+> **Biz instance note:** When `NEXT_PUBLIC_INSTANCE=biz`, the Flip Tracker and scanner features are hidden from the sidebar to keep it clean for business use. All other features work identically.
 
 ---
 
