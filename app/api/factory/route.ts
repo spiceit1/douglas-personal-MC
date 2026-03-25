@@ -11,11 +11,11 @@ export async function GET() {
       sql`SELECT * FROM mc_tasks ORDER BY created_at DESC`,
       sql`SELECT data FROM mc_team WHERE id = 'config' LIMIT 1`,
       sql`SELECT * FROM mc_scanner WHERE id = 'config' LIMIT 1`,
-      sql`SELECT * FROM mc_live_agents
-          WHERE status = 'active'
-            OR (status = 'completed' AND completed_at > NOW() - interval '30 minutes')
-            OR (status = 'failed' AND completed_at > NOW() - interval '30 minutes')
-          ORDER BY started_at DESC`,
+      sql`SELECT * FROM mc_factory_agents
+          WHERE status IN ('active', 'running')
+            OR (status = 'completed' AND updated_at > NOW() - interval '30 minutes')
+            OR (status = 'failed' AND updated_at > NOW() - interval '30 minutes')
+          ORDER BY created_at DESC`,
       sql`SELECT * FROM mc_agent_status`,
     ]);
 
@@ -81,8 +81,8 @@ export async function GET() {
       status: r.status,
       taskSummary: r.task_summary,
       taskId: r.task_id,
-      startedAt: r.started_at,
-      completedAt: r.completed_at,
+      startedAt: r.started_at || r.created_at,
+      completedAt: r.completed_at || (r.status === 'completed' ? r.updated_at : null),
       updatedAt: r.updated_at,
     }));
 
