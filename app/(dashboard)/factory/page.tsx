@@ -66,6 +66,7 @@ interface FactoryData {
 const ZONE_CONFIG = {
   backlog: {
     label: "BACKLOG",
+    tooltip: "Tasks waiting to be picked up. No agent assigned yet.",
     color: "#aaaaaa",
     bg: "#18181b",
     border: "#3a3a40",
@@ -75,6 +76,7 @@ const ZONE_CONFIG = {
   },
   "in-progress": {
     label: "IN PROGRESS",
+    tooltip: "Tasks being actively worked on. Primary agents and sub-agents appear here while working.",
     color: "#ffffff",
     bg: "#14112a",
     border: "#3d2e8c",
@@ -84,6 +86,7 @@ const ZONE_CONFIG = {
   },
   "in-review": {
     label: "REVIEW",
+    tooltip: "Tasks completed by an agent, waiting for human review or approval.",
     color: "#f0b429",
     bg: "#1e1800",
     border: "#5a4200",
@@ -93,6 +96,7 @@ const ZONE_CONFIG = {
   },
   done: {
     label: "DONE",
+    tooltip: "Completed tasks and finished sub-agents. Sub-agents appear here for 24 hours after completion.",
     color: "#26c97a",
     bg: "#081a11",
     border: "#0f4428",
@@ -609,6 +613,7 @@ function LiveAgentCard({ agent, onSelect }: { agent: LiveAgent; onSelect: (agent
             borderRadius: "3px",
             letterSpacing: "0.08em",
           }}
+          title="Spawned for a specific task. Disappears after completion."
         >
           SUB-AGENT
         </span>
@@ -625,11 +630,11 @@ function LiveAgentCard({ agent, onSelect }: { agent: LiveAgent; onSelect: (agent
             borderRadius: "3px",
             letterSpacing: "0.08em",
           }}
+          title="Always-on agent with a single purpose. Runs on a schedule."
         >
           DEDICATED
         </span>
       )}
-
       {agent.taskSummary && (
         <div
           style={{
@@ -749,7 +754,7 @@ function MobileZoneSection({
             flex: 1,
           }}
         >
-          {cfg.label}
+          {cfg.label}<span style={{ marginLeft: "6px", fontSize: "10px", color: "var(--text-muted)", cursor: "help" }} title={cfg.tooltip}>ⓘ</span>
         </span>
         <span
           style={{
@@ -874,7 +879,7 @@ function FactoryZone({
             fontFamily: "'Courier New', monospace",
           }}
         >
-          {cfg.label}
+          {cfg.label}<span style={{ marginLeft: "6px", fontSize: "10px", color: "var(--text-muted)", cursor: "help" }} title={cfg.tooltip}>ⓘ</span>
         </span>
         <span
           style={{
@@ -1225,7 +1230,7 @@ export default function AgentFactoryPage() {
             }}
           >
             <span style={{ fontSize: "12px", color: "#ffffff", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
-              PRIMARY AGENTS:
+              <span title="Main AI agents running on machines. Handle all tasks and conversations.">PRIMARY AGENTS:</span>
             </span>
             {liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent").map((agent) => (
               <div
@@ -1301,7 +1306,7 @@ export default function AgentFactoryPage() {
               }}
             >
               <span style={{ fontSize: "12px", color: "#4d7cfe", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
-                DEDICATED AGENTS:
+                <span title="Always-on agents with a single purpose. Run on a schedule (e.g. every 20 min). Stay here whether running, idle, or standby.">DEDICATED AGENTS:</span>
               </span>
               {allDedicated.map((agent) => {
                 const statusColor = agent.status === "active" ? "#26c97a" : agent.status === "scheduled" ? "#f0b429" : "#ffffff";
@@ -1454,7 +1459,7 @@ export default function AgentFactoryPage() {
                   return (
                     <span key={zone} style={{ fontSize: "14px", color: "#ffffff" }}>
                       <span style={{ color: cfg.topBorder, fontWeight: 700 }}>{count}</span>{" "}
-                      <span style={{ opacity: 0.7, fontSize: "12px" }}>{cfg.label}</span>
+                      <span style={{ opacity: 0.7, fontSize: "12px" }}>{cfg.label}<span style={{ marginLeft: "6px", fontSize: "10px", color: "var(--text-muted)", cursor: "help" }} title={cfg.tooltip}>ⓘ</span></span>
                     </span>
                   );
                 })}
@@ -1566,7 +1571,7 @@ export default function AgentFactoryPage() {
                   return (
                     <span key={zone} style={{ fontSize: "13px", color: "#ffffff" }}>
                       <span style={{ color: cfg.topBorder, fontWeight: 700 }}>{count}</span>{" "}
-                      {cfg.label}
+                      {cfg.label}<span style={{ marginLeft: "6px", fontSize: "10px", color: "var(--text-muted)", cursor: "help" }} title={cfg.tooltip}>ⓘ</span>
                     </span>
                   );
                 })}
