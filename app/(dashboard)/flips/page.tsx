@@ -2140,7 +2140,6 @@ export default function FlipsPage() {
                         <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{(Number(rules[p.buyField]) * 100).toFixed(0)}%</span>
                       ) : (
                         <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-                          <span style={{ fontSize: "9px", color: "var(--text-muted)" }}>~</span>
                           <input
                             type="number"
                             defaultValue={(Number(rules[p.buyField]) * 100).toFixed(0)}
