@@ -1262,7 +1262,7 @@ export default function AgentFactoryPage() {
                     )}
                   </div>
                   <div style={{ fontSize: "10px", color: agent.status === "active" ? "#4d7cfe" : agent.status === "completed" ? "#26c97a" : "#f05b5b", letterSpacing: "0.05em", fontWeight: 600 }}>
-                    {agent.status === "active" ? "🔴 LIVE" : agent.status === "completed" ? "✅ DONE" : agent.status.toUpperCase()}
+                    {agent.status === "active" ? "🟢 LIVE" : agent.status === "completed" ? "✅ DONE" : agent.status.toUpperCase()}
                   </div>
                   {agent.taskSummary && (
                     <div style={{ fontSize: "9px", color: "#888888", marginTop: 2, maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.taskSummary}</div>
@@ -1636,7 +1636,7 @@ export default function AgentFactoryPage() {
                   background: selectedAgent.status === "active" ? "#4d7cfe18" : selectedAgent.status === "completed" ? "#26c97a18" : "#f05b5b18",
                   color: selectedAgent.status === "active" ? "#4d7cfe" : selectedAgent.status === "completed" ? "#26c97a" : "#f05b5b",
                 }}>
-                  {selectedAgent.status === "active" ? "🔴 LIVE" : selectedAgent.status === "completed" ? "✅ Completed" : selectedAgent.status}
+                  {selectedAgent.status === "active" ? "🟢 LIVE" : selectedAgent.status === "completed" ? "✅ Completed" : selectedAgent.status}
                 </span>
               </div>
 
