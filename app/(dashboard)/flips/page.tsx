@@ -44,6 +44,7 @@ interface Flip {
   competitor_listing_id?: string | null;
   competitor_checkout_url?: string | null;
   own_listing_id?: string | null;
+  last_competitor_check?: string | null;
 }
 
 const PLATFORM_COLORS: Record<string, string> = {
@@ -729,6 +730,11 @@ function MobileFlipCard({
                 );
               })()}
             </div>
+            {flip.last_competitor_check && (
+              <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>
+                Checked {timeAgo(flip.last_competitor_check)}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -2863,30 +2869,38 @@ export default function FlipsPage() {
                       )}
                       {/* Competitor floor info */}
                       {flip.competitor_floor != null && (
-                        <div style={{ marginTop: 4, fontSize: "11px", display: "flex", alignItems: "center", gap: 4 }}>
+                        <div style={{ marginTop: 4, fontSize: "11px" }}>
                           {(() => {
                             const ourBuyer = (flip.listPrice || 0) * 1.10;
                             const isCompetitive = ourBuyer <= Number(flip.competitor_floor);
+                            const checkTime = flip.last_competitor_check ? timeAgo(flip.last_competitor_check) : null;
                             return (
                               <>
-                                <span style={{ color: isCompetitive ? "#26c97a" : "#f0b429" }}>
-                                  {isCompetitive ? "✅" : "⚠️"}
-                                </span>
-                                <span style={{ color: "var(--text-tertiary)" }}>Floor:</span>
-                                {flip.competitor_checkout_url ? (
-                                  <a
-                                    href={flip.competitor_checkout_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{ color: isCompetitive ? "#26c97a" : "#f0b429", fontWeight: 600, textDecoration: "none" }}
-                                    title="Buy competitor listing"
-                                  >
-                                    {fmt$(Number(flip.competitor_floor))}
-                                  </a>
-                                ) : (
-                                  <span style={{ color: isCompetitive ? "#26c97a" : "#f0b429", fontWeight: 600 }}>
-                                    {fmt$(Number(flip.competitor_floor))}
+                                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                  <span style={{ color: isCompetitive ? "#26c97a" : "#f0b429" }}>
+                                    {isCompetitive ? "✅" : "⚠️"}
                                   </span>
+                                  <span style={{ color: "var(--text-tertiary)" }}>Floor:</span>
+                                  {flip.competitor_checkout_url ? (
+                                    <a
+                                      href={flip.competitor_checkout_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{ color: isCompetitive ? "#26c97a" : "#f0b429", fontWeight: 600, textDecoration: "none" }}
+                                      title="Buy competitor listing"
+                                    >
+                                      {fmt$(Number(flip.competitor_floor))}
+                                    </a>
+                                  ) : (
+                                    <span style={{ color: isCompetitive ? "#26c97a" : "#f0b429", fontWeight: 600 }}>
+                                      {fmt$(Number(flip.competitor_floor))}
+                                    </span>
+                                  )}
+                                </div>
+                                {checkTime && (
+                                  <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2, marginLeft: 18 }}>
+                                    Checked {checkTime}
+                                  </div>
                                 )}
                               </>
                             );
