@@ -38,9 +38,7 @@ NEXT_PUBLIC_INSTANCE=personal
 
 Before anything else, ask:
 
-> "Is this Mission Control instance for **personal** use or **business** use?
-> - **Personal** = full features (flip tracker, deal scanner, ticket watch, etc.)
-> - **Business** = clean dashboard for working with partners (no personal trading features)"
+> "What is this Mission Control instance for? Give me a short description (e.g., 'personal projects', 'business with my partner Morris', 'client dashboard'). I'll configure it accordingly."
 
 Their answer determines the `NEXT_PUBLIC_INSTANCE` value you'll set later: `personal` or `biz`.
 
@@ -104,6 +102,10 @@ Visit `/setup` on your deployed site:
 3. **Click "Seed Defaults"** — inserts base config rows (team roster, scanner rules, etc.)
 4. All pages will now work correctly
 
+### Step 5: Verify everything works
+
+Click **Verify All Routes** on the `/setup` page. All checks should show green (✅). If any fail, check the error message and ensure migration and seeding completed successfully.
+
 > **That's it.** The human did 2 things (Neon + Netlify tokens). The agent did everything else.
 
 ---
@@ -114,8 +116,7 @@ Visit `/setup` on your deployed site:
 |---|---|---|
 | Dashboard | `/` | Overview cards — tasks, flips, agents, scanner status |
 | Tasks | `/tasks` | Kanban-style task board with priorities |
-| Flip Tracker | `/flips` | Ticket inventory — active positions, P&L, listings |
-| Deal Scanner | `/scanner` | Automated deal scanner with ROI rules and auto-buy config |
+| *(extensible)* | | *Add custom pages as needed for your use case* |
 | Factory | `/factory` | Sub-agent registry — spawned agents, status, task summaries |
 | Inbox | `/inbox` | Agent-to-agent message inbox |
 | Chat | `/chat` | Telegram chat history viewer |
@@ -141,7 +142,7 @@ To spin up a second instance (e.g. for a business partner):
 5. **Visit `/setup`** → Run Migration → Seed Defaults
 6. Done — fully independent instance with its own database
 
-> **Biz instance note:** When `NEXT_PUBLIC_INSTANCE=biz`, the Flip Tracker and scanner features are hidden from the sidebar to keep it clean for business use. All other features work identically.
+> **Instance types:** Set `NEXT_PUBLIC_INSTANCE` to any label that makes sense (e.g., `personal`, `biz`, `client`). This value is used for display and can control feature flags if custom pages are added later.
 
 ---
 
@@ -160,7 +161,8 @@ mission-control/
 │       │   ├── route.ts          # GET /api/setup — legacy status
 │       │   ├── status/route.ts   # GET /api/setup/status — table health
 │       │   ├── migrate/route.ts  # POST /api/setup/migrate — create tables
-│       │   └── seed/route.ts     # POST /api/setup/seed — insert defaults
+│       │   ├── seed/route.ts     # POST /api/setup/seed — insert defaults
+│       │   └── health/route.ts   # GET /api/setup/health — route verification
 │       ├── tasks/route.ts
 │       ├── flips/route.ts
 │       └── ...

@@ -15,6 +15,7 @@ import {
   ChevronUp,
   Server,
   Zap,
+  ShieldCheck,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -55,6 +56,21 @@ interface SeedResponse {
   error?: string;
 }
 
+interface HealthCheckResult {
+  name: string;
+  status: "pass" | "fail";
+  statusCode?: number;
+  error?: string;
+}
+
+interface HealthResponse {
+  ok: boolean;
+  passed: number;
+  failed: number;
+  total: number;
+  checks: HealthCheckResult[];
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function SetupPage() {
@@ -67,6 +83,8 @@ export default function SetupPage() {
   const [seedResult, setSeedResult] = useState<SeedResponse | null>(null);
   const [showAllTables, setShowAllTables] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [healthChecking, setHealthChecking] = useState(false);
+  const [healthResult, setHealthResult] = useState<HealthResponse | null>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -120,6 +138,19 @@ export default function SetupPage() {
       setSeedResult({ ok: false, success: false, error: String(e) });
     }
     setSeeding(false);
+  };
+
+  const runHealthCheck = async () => {
+    setHealthChecking(true);
+    setHealthResult(null);
+    try {
+      const res = await fetch("/api/setup/health");
+      const data: HealthResponse = await res.json();
+      setHealthResult(data);
+    } catch (e) {
+      setHealthResult({ ok: false, passed: 0, failed: 1, total: 1, checks: [{ name: "Health API", status: "fail", error: String(e) }] });
+    }
+    setHealthChecking(false);
   };
 
   const connected = status?.connected || status?.db_connected || false;
@@ -451,6 +482,29 @@ export default function SetupPage() {
             <RefreshCw size={15} className={loading ? "spin" : ""} />
             Refresh
           </button>
+
+          <button
+            onClick={runHealthCheck}
+            disabled={healthChecking || !connected}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "11px 22px",
+              background: healthChecking ? "#1a7a3c" : "#22c55e",
+              color: "#fff",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: 600,
+              cursor: healthChecking || !connected ? "not-allowed" : "pointer",
+              opacity: !connected ? 0.4 : 1,
+              transition: "background 0.15s",
+            }}
+          >
+            {healthChecking ? <Loader2 size={15} className="spin" /> : <ShieldCheck size={15} />}
+            {healthChecking ? "Checking..." : "Verify All Routes"}
+          </button>
         </div>
 
         {/* ── Migration Result ──────────────────────────────────────────────── */}
@@ -534,6 +588,137 @@ export default function SetupPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Health Check Results ──────────────────────────────────────────── */}
+        {healthResult && (
+          <div
+            style={{
+              background: "var(--bg-elevated)",
+              border: `1px solid ${healthResult.ok ? "#22c55e40" : "#f0b42940"}`,
+              borderRadius: "10px",
+              marginBottom: "20px",
+              overflow: "hidden",
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: "14px 20px",
+                borderBottom: "1px solid var(--border-subtle)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <ShieldCheck size={16} color={healthResult.ok ? "#22c55e" : "#f0b429"} />
+                <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>
+                  Route Verification
+                </span>
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontFamily: "monospace",
+                    fontWeight: 700,
+                    color: healthResult.ok ? "#22c55e" : "#f0b429",
+                    background: healthResult.ok ? "#22c55e18" : "#f0b42918",
+                    border: `1px solid ${healthResult.ok ? "#22c55e40" : "#f0b42940"}`,
+                    padding: "2px 8px",
+                    borderRadius: "10px",
+                  }}
+                >
+                  {healthResult.passed}/{healthResult.total} passed
+                </span>
+              </div>
+            </div>
+
+            {/* Check list */}
+            <div>
+              {healthResult.checks.map((check, i) => {
+                const isLast = i === healthResult.checks.length - 1;
+                return (
+                  <div
+                    key={check.name}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "10px",
+                      padding: "9px 20px",
+                      borderBottom: isLast ? "none" : "1px solid var(--border-subtle)",
+                    }}
+                  >
+                    <span style={{ fontSize: "14px", lineHeight: "1.4", flexShrink: 0, marginTop: "1px" }}>
+                      {check.status === "pass" ? "✅" : "❌"}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: 500,
+                          color: check.status === "pass" ? "var(--text-primary)" : "#f05b5b",
+                        }}
+                      >
+                        {check.name}
+                      </span>
+                      {check.statusCode && (
+                        <span
+                          style={{
+                            marginLeft: "8px",
+                            fontSize: "11px",
+                            fontFamily: "monospace",
+                            color: "var(--text-tertiary)",
+                          }}
+                        >
+                          {check.statusCode}
+                        </span>
+                      )}
+                      {check.error && (
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            color: "#f05b5b",
+                            marginTop: "2px",
+                            opacity: 0.85,
+                          }}
+                        >
+                          {check.error}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Overall banner */}
+            <div
+              style={{
+                padding: "14px 20px",
+                borderTop: "1px solid var(--border-subtle)",
+                background: healthResult.ok ? "#22c55e10" : "#f0b42910",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              {healthResult.ok ? (
+                <>
+                  <span style={{ fontSize: "20px" }}>🎉</span>
+                  <span style={{ fontSize: "14px", fontWeight: 700, color: "#22c55e" }}>
+                    All systems operational!
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: "20px" }}>⚠️</span>
+                  <span style={{ fontSize: "14px", fontWeight: 600, color: "#f0b429" }}>
+                    Some routes need attention — check the errors above and ensure migration and seeding completed successfully.
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         )}
 
