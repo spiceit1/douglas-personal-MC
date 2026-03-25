@@ -658,12 +658,14 @@ function MobileZoneSection({
   agents,
   liveAgents = [],
   onSelectTask,
+  onSelectAgent,
 }: {
   zoneKey: keyof typeof ZONE_CONFIG;
   tasks: Task[];
   agents: Agent[];
   liveAgents?: LiveAgent[];
   onSelectTask: (task: Task) => void;
+  onSelectAgent?: (agent: LiveAgent) => void;
 }) {
   const cfg = ZONE_CONFIG[zoneKey];
   const [collapsed, setCollapsed] = useState(zoneKey === "done");
@@ -751,7 +753,7 @@ function MobileZoneSection({
           {zoneLiveAgents.length > 0 && (
             <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "8px", padding: "12px 8px 8px", borderBottom: `1px solid var(--border-subtle)` }}>
               {zoneLiveAgents.map((agent) => (
-                <LiveAgentCard key={agent.id} agent={agent} onSelect={setSelectedAgent} />
+                <LiveAgentCard key={agent.id} agent={agent} onSelect={onSelectAgent || (() => {})} />
               ))}
             </div>
           )}
@@ -782,12 +784,14 @@ function FactoryZone({
   agents,
   liveAgents = [],
   onSelectTask,
+  onSelectAgent,
 }: {
   zoneKey: keyof typeof ZONE_CONFIG;
   tasks: Task[];
   agents: Agent[];
   liveAgents?: LiveAgent[];
   onSelectTask: (task: Task) => void;
+  onSelectAgent?: (agent: LiveAgent) => void;
 }) {
   const cfg = ZONE_CONFIG[zoneKey];
   const workingAgents = agents.filter((a) => {
@@ -900,7 +904,7 @@ function FactoryZone({
           }}
         >
           {zoneLiveAgents.map((agent) => (
-            <LiveAgentCard key={agent.id} agent={agent} onSelect={setSelectedAgent} />
+            <LiveAgentCard key={agent.id} agent={agent} onSelect={onSelectAgent || (() => {})} />
           ))}
         </div>
       )}
@@ -1299,7 +1303,7 @@ export default function AgentFactoryPage() {
                 tasks={tasks.filter((t) => t.status === zoneKey)}
                 agents={agents}
                 liveAgents={liveAgents}
-                onSelectTask={setSelectedTask}
+                onSelectTask={setSelectedTask} onSelectAgent={setSelectedAgent}
               />
             ))}
           </div>
@@ -1326,7 +1330,7 @@ export default function AgentFactoryPage() {
                     tasks={tasks.filter((t) => t.status === zoneKey)}
                     agents={agents}
                     liveAgents={liveAgents}
-                    onSelectTask={setSelectedTask}
+                    onSelectTask={setSelectedTask} onSelectAgent={setSelectedAgent}
                   />
                 </div>
                 {idx < zones.length - 1 && <div style={{ width: "12px", flexShrink: 0 }} />}
