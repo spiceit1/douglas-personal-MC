@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, X, Pencil, DollarSign, TrendingUp, Tag, Ticket, Search, Filter, ExternalLink, Eye, ChevronDown, MoreHorizontal, Bell, BellOff, Trash2 } from "lucide-react";
+import { Plus, X, Pencil, DollarSign, TrendingUp, Tag, Ticket, Search, Filter, ExternalLink, Eye, ChevronDown, MoreHorizontal, Bell, BellOff, Trash2, History } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1385,6 +1385,163 @@ function DealStatusBadge({ status }: { status: DealStatus }) {
   );
 }
 
+// ─── Price History Modal ──────────────────────────────────────────────────────
+
+interface PriceHistoryEntry {
+  id: number;
+  flip_id: string;
+  platform: string;
+  our_price: number | null;
+  competitor_floor: number | null;
+  competitor_listing_id: string | null;
+  action: string;
+  old_price: number | null;
+  new_price: number | null;
+  reason: string | null;
+  checked_at: string;
+}
+
+function PriceHistoryModal({
+  flipId,
+  flipName,
+  platform,
+  onClose,
+}: {
+  flipId: string;
+  flipName: string;
+  platform: string;
+  onClose: () => void;
+}) {
+  const [history, setHistory] = useState<PriceHistoryEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`/api/listing-history?flip_id=${flipId}&platform=${platform}&limit=50`);
+        if (res.ok) {
+          const data = await res.json();
+          setHistory(data.history ?? []);
+        }
+      } catch (e) {
+        console.error("fetch price history error:", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [flipId, platform]);
+
+  const actionColors: Record<string, string> = {
+    adjusted: "#f0b429",
+    check: "var(--text-tertiary)",
+    no_change: "#26c97a",
+    error: "#f05b5b",
+  };
+
+  const actionLabels: Record<string, string> = {
+    adjusted: "⚡ Adjusted",
+    check: "👁 Checked",
+    no_change: "✅ No change",
+    error: "❌ Error",
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.75)" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg rounded-xl border overflow-hidden"
+        style={{
+          background: "var(--bg-elevated)",
+          borderColor: "var(--border-default)",
+          boxShadow: "0 12px 40px rgba(0,0,0,0.7)",
+          maxHeight: "80vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border-subtle)", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
+                <History size={14} style={{ display: "inline", marginRight: 6, verticalAlign: "-2px" }} />
+                Price History — {platform}
+              </h2>
+              <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2 }}>{flipName}</div>
+            </div>
+            <button onClick={onClose} style={{ color: "var(--text-tertiary)", background: "none", border: "none", cursor: "pointer" }}>
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{ flex: 1, overflow: "auto", padding: "12px 20px" }}>
+          {loading ? (
+            <div style={{ textAlign: "center", padding: 40, color: "var(--text-tertiary)", fontSize: 13 }}>Loading...</div>
+          ) : history.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 40, color: "var(--text-muted)", fontSize: 13 }}>
+              No price checks yet — monitor will start logging here
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {history.map((h) => {
+                const actionColor = actionColors[h.action] ?? "var(--text-tertiary)";
+                const actionLabel = actionLabels[h.action] ?? h.action;
+                const ts = new Date(h.checked_at).toLocaleString("en-US", {
+                  month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
+                });
+                return (
+                  <div
+                    key={h.id}
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      background: h.action === "adjusted" ? "#f0b42908" : "var(--bg-primary)",
+                      border: h.action === "adjusted" ? "1px solid #f0b42925" : "1px solid var(--border-subtle)",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: actionColor }}>{actionLabel}</span>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{ts}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+                      {h.our_price != null && (
+                        <div>
+                          <span style={{ color: "var(--text-tertiary)" }}>Our price: </span>
+                          <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{fmt$(Number(h.our_price))}</span>
+                        </div>
+                      )}
+                      {h.competitor_floor != null && (
+                        <div>
+                          <span style={{ color: "var(--text-tertiary)" }}>Floor: </span>
+                          <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{fmt$(Number(h.competitor_floor))}</span>
+                        </div>
+                      )}
+                    </div>
+                    {h.action === "adjusted" && h.old_price != null && h.new_price != null && (
+                      <div style={{ fontSize: 12, marginTop: 4, color: "#f0b429", fontWeight: 600 }}>
+                        {fmt$(Number(h.old_price))} → {fmt$(Number(h.new_price))}
+                      </div>
+                    )}
+                    {h.reason && (
+                      <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 3 }}>{h.reason}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function FlipsPage() {
   const [activeTab, setActiveTab] = useState<"flips" | "deals" | "rules" | "watch">("flips");
   const [flips, setFlips] = useState<Flip[]>([]);
@@ -1398,6 +1555,7 @@ export default function FlipsPage() {
   const [editWatch, setEditWatch] = useState<TicketWatch | null>(null);
   const [editFlip, setEditFlip] = useState<Flip | null>(null);
   const [sellFlip, setSellFlip] = useState<Flip | null>(null);
+  const [priceHistoryTarget, setPriceHistoryTarget] = useState<{ flipId: string; flipName: string; platform: string } | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [dealFilter, setDealFilter] = useState<"all" | DealStatus>("all");
   const [editingDeal, setEditingDeal] = useState<DealLogEntry | null>(null);
@@ -2645,7 +2803,13 @@ export default function FlipsPage() {
                             return (
                               <div key={li} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px" }}>
                                 <span style={{ fontWeight: 700, color, width: "26px" }}>{listing.code}</span>
-                                <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{fmt$(listing.price)}</span>
+                                <button
+                                  onClick={() => setPriceHistoryTarget({ flipId: flip.id, flipName: flip.eventName, platform: listing.platform || listing.code })}
+                                  style={{ color: "var(--text-primary)", fontWeight: 500, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textDecorationStyle: "dotted" as const, textUnderlineOffset: "3px", textDecorationColor: "var(--border-subtle)" }}
+                                  title="View price history"
+                                >
+                                  {fmt$(listing.price)}
+                                </button>
                                 <span style={{ color: "var(--text-tertiary)" }}>{timeStr}</span>
                                 <span>{statusIcon}</span>
                               </div>
@@ -2655,7 +2819,13 @@ export default function FlipsPage() {
                       ) : flip.listPrice > 0 ? (
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px" }}>
                           <span style={{ fontWeight: 700, color: "#26c97a", width: "26px" }}>SH</span>
-                          <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{fmt$(flip.listPrice)}</span>
+                          <button
+                            onClick={() => setPriceHistoryTarget({ flipId: flip.id, flipName: flip.eventName, platform: "StubHub" })}
+                            style={{ color: "var(--text-primary)", fontWeight: 500, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textDecorationStyle: "dotted" as const, textUnderlineOffset: "3px", textDecorationColor: "var(--border-subtle)" }}
+                            title="View price history"
+                          >
+                            {fmt$(flip.listPrice)}
+                          </button>
                           <span style={{ color: "var(--text-tertiary)" }}>—</span>
                         </div>
                       ) : (
@@ -2801,6 +2971,15 @@ export default function FlipsPage() {
           onClose={() => setEditWatch(null)}
           onSave={handleEditWatch}
           initial={editWatch}
+        />
+      )}
+
+      {priceHistoryTarget && (
+        <PriceHistoryModal
+          flipId={priceHistoryTarget.flipId}
+          flipName={priceHistoryTarget.flipName}
+          platform={priceHistoryTarget.platform}
+          onClose={() => setPriceHistoryTarget(null)}
         />
       )}
     </div>
