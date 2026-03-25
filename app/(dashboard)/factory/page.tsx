@@ -1222,6 +1222,63 @@ export default function AgentFactoryPage() {
           </div>
         )}
 
+        {/* ── Active agents roster ─────────────────────────────────────── */}
+        {liveAgents.length > 0 && (
+          <div
+            style={{
+              flexShrink: 0,
+              padding: isMobile ? "10px 14px" : "10px 24px",
+              borderBottom: "1px solid var(--border-subtle)",
+              background: "var(--bg-elevated)",
+              display: "flex",
+              alignItems: isMobile ? "flex-start" : "center",
+              gap: "10px",
+              flexWrap: "wrap",
+              overflowX: "auto",
+            }}
+          >
+            <span style={{ fontSize: "12px", color: "#ffffff", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
+              AGENTS:
+            </span>
+            {liveAgents.map((agent) => (
+              <div
+                key={agent.id}
+                onClick={() => setSelectedAgent(agent)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "6px 12px",
+                  background: agent.status === "active"
+                    ? "linear-gradient(135deg, #0f1a2e 0%, #1a1040 100%)"
+                    : agent.status === "completed"
+                    ? "linear-gradient(135deg, #081a11 0%, #0f2a1a 100%)"
+                    : "var(--bg-secondary)",
+                  border: agent.status === "active"
+                    ? "1px solid #4d7cfe80"
+                    : agent.status === "completed"
+                    ? "1px solid #26c97a60"
+                    : "1px solid var(--border-subtle)",
+                  borderRadius: "4px",
+                  flexShrink: 0,
+                  cursor: "pointer",
+                }}
+              >
+                <span style={{ fontSize: "18px" }}>{agent.emoji}</span>
+                <div>
+                  <div style={{ fontSize: "13px", color: "#ffffff", fontWeight: 600 }}>{agent.name}</div>
+                  <div style={{ fontSize: "10px", color: agent.status === "active" ? "#4d7cfe" : agent.status === "completed" ? "#26c97a" : "#f05b5b", letterSpacing: "0.05em", fontWeight: 600 }}>
+                    {agent.status === "active" ? "🔴 LIVE" : agent.status === "completed" ? "✅ DONE" : agent.status.toUpperCase()}
+                  </div>
+                  {agent.taskSummary && (
+                    <div style={{ fontSize: "9px", color: "#888888", marginTop: 2, maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.taskSummary}</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* ── Factory floor ──────────────────────────────────────────────── */}
         {isMobile ? (
           /* ── MOBILE: vertical stacked sections ── */
