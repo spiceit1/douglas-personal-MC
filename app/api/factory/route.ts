@@ -100,13 +100,12 @@ export async function GET() {
       (t) => t.status === "in-progress" || t.status === "in-review"
     ).length;
 
-    const activeAgents = agents.filter(
-      (a: Record<string, unknown>) => a.status === "active" || a.status === "idle"
-    ).length;
-
+    // Count from mc_factory_agents only (single source of truth)
     const activeLiveAgents = liveAgents.filter(
       (a: Record<string, unknown>) => a.status === "active"
     ).length;
+
+    const totalLiveAgents = liveAgents.length;
 
     return NextResponse.json({
       tasks,
@@ -116,8 +115,8 @@ export async function GET() {
       stats: {
         activeTasks,
         completedToday,
-        activeAgents: activeAgents + activeLiveAgents,
-        totalAgents: agents.length,
+        activeAgents: activeLiveAgents,
+        totalAgents: totalLiveAgents,
         liveAgentCount: activeLiveAgents,
       },
     });

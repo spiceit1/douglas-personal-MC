@@ -378,7 +378,8 @@ async function syncAgentStatus() {
       console.log("  Could not check main session:", e.message);
     }
 
-    // ── Scout (scanner) ──
+    // ── Scout (scanner) — now tracked via mc_factory_agents as Dedicated Agent, not mc_agent_status ──
+    // Update factory_agents status instead
     try {
       const scannerLog = path.join(WORKSPACE, "deal-scanner/scanner.log");
       const content = fs.readFileSync(scannerLog, "utf-8");
@@ -396,13 +397,13 @@ async function syncAgentStatus() {
         const minsSinceLast = msSinceLast / 60000;
         const scanIntervalMins = 20; // runs every 20 min
         if (minsSinceLast <= 2) {
-          await sql`UPDATE mc_agent_status SET status='active', status_text='SCANNING — finding deals...', last_active_at=${lastTimestamp}, updated_at=NOW() WHERE agent_id='scanner'`;
+          await sql`UPDATE mc_factory_agents SET status='active', task_summary='SCANNING — finding deals...', updated_at=NOW() WHERE id='scout'`;
         } else {
           const nextScanMins = Math.max(0, Math.ceil(scanIntervalMins - minsSinceLast));
           const statusText = nextScanMins === 0
             ? "IDLE — scan due now"
             : `IDLE — next scan in ${nextScanMins}m`;
-          await sql`UPDATE mc_agent_status SET status='idle', status_text=${statusText}, last_active_at=${lastTimestamp}, updated_at=NOW() WHERE agent_id='scanner'`;
+          await sql`UPDATE mc_factory_agents SET status='active', task_summary=${statusText}, updated_at=NOW() WHERE id='scout'`;
         }
       }
     } catch {
