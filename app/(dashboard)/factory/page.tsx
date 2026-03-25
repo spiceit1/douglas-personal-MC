@@ -1242,7 +1242,7 @@ export default function AgentFactoryPage() {
             }}
           >
             <span style={{ fontSize: "12px", color: "#ffffff", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
-              AGENTS:
+              PRIMARY AGENTS:
             </span>
             {liveAgents.filter(a => a.role !== "Sub-Agent").map((agent) => (
               <div
