@@ -613,6 +613,22 @@ function LiveAgentCard({ agent, onSelect }: { agent: LiveAgent; onSelect: (agent
           SUB-AGENT
         </span>
       )}
+      {agent.role === "Dedicated Agent" && (
+        <span
+          style={{
+            fontSize: "8px",
+            fontWeight: 700,
+            color: "#4d7cfe",
+            background: "#4d7cfe18",
+            border: "1px solid #4d7cfe40",
+            padding: "1px 6px",
+            borderRadius: "3px",
+            letterSpacing: "0.08em",
+          }}
+        >
+          DEDICATED
+        </span>
+      )}
 
       {agent.taskSummary && (
         <div
@@ -1243,7 +1259,7 @@ export default function AgentFactoryPage() {
           </div>
         )}
 
-        {/* ── Active agents roster (primary agents only, not sub-agents) ── */}
+        {/* ── Active agents roster (primary + dedicated agents, not sub-agents) ── */}
         {liveAgents.filter(a => a.role !== "Sub-Agent").length > 0 && (
           <div
             style={{
