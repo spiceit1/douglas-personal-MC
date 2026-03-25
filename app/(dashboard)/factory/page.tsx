@@ -597,6 +597,23 @@ function LiveAgentCard({ agent, onSelect }: { agent: LiveAgent; onSelect: (agent
         {agent.name}
       </div>
 
+      {agent.role === "Sub-Agent" && (
+        <span
+          style={{
+            fontSize: "8px",
+            fontWeight: 700,
+            color: "#f0b429",
+            background: "#f0b42918",
+            border: "1px solid #f0b42940",
+            padding: "1px 6px",
+            borderRadius: "3px",
+            letterSpacing: "0.08em",
+          }}
+        >
+          SUB-AGENT
+        </span>
+      )}
+
       {agent.taskSummary && (
         <div
           style={{
