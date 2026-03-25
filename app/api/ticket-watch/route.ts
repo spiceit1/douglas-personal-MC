@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
       max_price_per_ticket,
       alert_email,
       alert_telegram = true,
+      event_url,
       notes,
     } = body;
 
@@ -38,9 +39,9 @@ export async function POST(req: NextRequest) {
 
     const rows = await sql`
       INSERT INTO mc_ticket_watch
-        (event_name, venue, event_date, section_filter, quantity, max_price_per_ticket, alert_email, alert_telegram, notes)
+        (event_name, venue, event_date, section_filter, quantity, max_price_per_ticket, alert_email, alert_telegram, event_url, notes)
       VALUES
-        (${event_name}, ${venue ?? null}, ${event_date ?? null}, ${section_filter}, ${quantity}, ${max_price_per_ticket ?? null}, ${alert_email ?? null}, ${alert_telegram}, ${notes ?? null})
+        (${event_name}, ${venue ?? null}, ${event_date ?? null}, ${section_filter}, ${quantity}, ${max_price_per_ticket ?? null}, ${alert_email ?? null}, ${alert_telegram}, ${event_url ?? null}, ${notes ?? null})
       RETURNING *
     `;
     return NextResponse.json(rows[0]);
@@ -70,7 +71,7 @@ export async function PATCH(req: NextRequest) {
       "event_name", "venue", "event_date", "section_filter", "quantity",
       "max_price_per_ticket", "alert_email", "alert_telegram", "status",
       "notes", "last_checked_at", "last_cheapest_price", "last_cheapest_platform",
-      "last_cheapest_url", "price_history",
+      "last_cheapest_url", "event_url", "price_history",
     ];
 
     for (const key of allowed) {

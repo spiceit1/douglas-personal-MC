@@ -743,6 +743,7 @@ interface TicketWatch {
   last_cheapest_price: number | null;
   last_cheapest_platform: string | null;
   last_cheapest_url: string | null;
+  event_url: string | null;
   price_history: Array<{ price: number; platform: string; checked_at: string }>;
   created_at: string;
   updated_at: string;
@@ -756,6 +757,7 @@ interface WatchFormData {
   quantity: number;
   max_price_per_ticket: string;
   alert_email: string;
+  event_url: string;
   notes: string;
 }
 
@@ -767,6 +769,7 @@ const defaultWatchForm: WatchFormData = {
   quantity: 2,
   max_price_per_ticket: "",
   alert_email: "",
+  event_url: "",
   notes: "",
 };
 
@@ -801,6 +804,7 @@ function WatchModal({
           quantity: initial.quantity,
           max_price_per_ticket: initial.max_price_per_ticket != null ? String(initial.max_price_per_ticket) : "",
           alert_email: initial.alert_email ?? "",
+          event_url: initial.event_url ?? "",
           notes: initial.notes ?? "",
         }
       : defaultWatchForm
@@ -961,6 +965,20 @@ function WatchModal({
 
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
+              Event Page URL
+            </label>
+            <input
+              type="url"
+              value={form.event_url}
+              onChange={(e) => set("event_url", e.target.value)}
+              placeholder="https://www.stubhub.com/event/..."
+              className="w-full px-3 py-2 rounded-md border text-sm"
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>
               Notes
             </label>
             <textarea
@@ -1069,17 +1087,39 @@ function TicketWatchCard({
       {/* Header row */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 17,
-              fontWeight: 700,
-              color: "var(--text-primary)",
-              lineHeight: 1.3,
-              marginBottom: 4,
-            }}
-          >
-            {watch.event_name}
-          </div>
+          {watch.event_url ? (
+            <a
+              href={watch.event_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: 17,
+                fontWeight: 700,
+                color: "#3b82f6",
+                lineHeight: 1.3,
+                marginBottom: 4,
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              {watch.event_name}
+              <ExternalLink size={13} style={{ flexShrink: 0, opacity: 0.7 }} />
+            </a>
+          ) : (
+            <div
+              style={{
+                fontSize: 17,
+                fontWeight: 700,
+                color: "var(--text-primary)",
+                lineHeight: 1.3,
+                marginBottom: 4,
+              }}
+            >
+              {watch.event_name}
+            </div>
+          )}
           {(watch.venue || eventDate) && (
             <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
               {[watch.venue, eventDate].filter(Boolean).join(" · ")}
@@ -1444,6 +1484,7 @@ export default function FlipsPage() {
         quantity: data.quantity,
         max_price_per_ticket: data.max_price_per_ticket ? parseFloat(data.max_price_per_ticket) : null,
         alert_email: data.alert_email || null,
+        event_url: data.event_url || null,
         notes: data.notes || null,
       }),
     });
@@ -1467,6 +1508,7 @@ export default function FlipsPage() {
         quantity: data.quantity,
         max_price_per_ticket: data.max_price_per_ticket ? parseFloat(data.max_price_per_ticket) : null,
         alert_email: data.alert_email || null,
+        event_url: data.event_url || null,
         notes: data.notes || null,
       }),
     });
