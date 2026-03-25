@@ -446,7 +446,7 @@ function AgentCharacter({
   );
 }
 
-function LiveAgentCard({ agent }: { agent: LiveAgent }) {
+function LiveAgentCard({ agent, onSelect }: { agent: LiveAgent; onSelect: (agent: LiveAgent) => void }) {
   const isActive = agent.status === "active";
   const isCompleted = agent.status === "completed";
 
@@ -500,7 +500,9 @@ function LiveAgentCard({ agent }: { agent: LiveAgent }) {
         animation: isActive ? "liveAgentGlow 2s ease-in-out infinite" : "none",
         opacity: isCompleted ? 0.75 : 1,
         transition: "opacity 0.5s ease",
+        cursor: "pointer",
       }}
+      onClick={() => onSelect(agent)}
     >
       {isActive && (
         <div
@@ -749,7 +751,7 @@ function MobileZoneSection({
           {zoneLiveAgents.length > 0 && (
             <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "8px", padding: "12px 8px 8px", borderBottom: `1px solid var(--border-subtle)` }}>
               {zoneLiveAgents.map((agent) => (
-                <LiveAgentCard key={agent.id} agent={agent} />
+                <LiveAgentCard key={agent.id} agent={agent} onSelect={setSelectedAgent} />
               ))}
             </div>
           )}
@@ -898,7 +900,7 @@ function FactoryZone({
           }}
         >
           {zoneLiveAgents.map((agent) => (
-            <LiveAgentCard key={agent.id} agent={agent} />
+            <LiveAgentCard key={agent.id} agent={agent} onSelect={setSelectedAgent} />
           ))}
         </div>
       )}
@@ -992,6 +994,7 @@ export default function AgentFactoryPage() {
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [uptime, setUptime] = useState(0);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<LiveAgent | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -1462,6 +1465,93 @@ export default function AgentFactoryPage() {
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
         />
+      )}
+
+      {selectedAgent && (
+        <div
+          onClick={() => setSelectedAgent(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "500px",
+              width: "100%",
+              maxHeight: "80vh",
+              overflow: "auto",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "28px" }}>{selectedAgent.emoji}</span>
+                <div>
+                  <div style={{ fontSize: "18px", fontWeight: 600, color: "var(--text-primary)" }}>{selectedAgent.name}</div>
+                  <div style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>{selectedAgent.role}</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedAgent(null)}
+                style={{ background: "none", border: "none", color: "var(--text-tertiary)", fontSize: "20px", cursor: "pointer", padding: "4px 8px" }}
+              >✕</button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ padding: "12px", borderRadius: "8px", background: "var(--bg-primary)" }}>
+                <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-tertiary)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Status</div>
+                <span style={{
+                  fontSize: "12px", fontWeight: 600, padding: "3px 10px", borderRadius: "6px",
+                  background: selectedAgent.status === "active" ? "#4d7cfe18" : selectedAgent.status === "completed" ? "#26c97a18" : "#f05b5b18",
+                  color: selectedAgent.status === "active" ? "#4d7cfe" : selectedAgent.status === "completed" ? "#26c97a" : "#f05b5b",
+                }}>
+                  {selectedAgent.status === "active" ? "🔴 LIVE" : selectedAgent.status === "completed" ? "✅ Completed" : selectedAgent.status}
+                </span>
+              </div>
+
+              <div style={{ padding: "12px", borderRadius: "8px", background: "var(--bg-primary)" }}>
+                <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-tertiary)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Model</div>
+                <div style={{ fontSize: "14px", color: "var(--text-primary)" }}>{selectedAgent.model || "—"}</div>
+              </div>
+
+              <div style={{ padding: "12px", borderRadius: "8px", background: "var(--bg-primary)" }}>
+                <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-tertiary)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Task</div>
+                <div style={{ fontSize: "14px", color: "var(--text-primary)", lineHeight: 1.5 }}>{selectedAgent.taskSummary || "No task description"}</div>
+              </div>
+
+              {selectedAgent.sessionKey && (
+                <div style={{ padding: "12px", borderRadius: "8px", background: "var(--bg-primary)" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-tertiary)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Session</div>
+                  <div style={{ fontSize: "11px", color: "var(--text-tertiary)", fontFamily: "monospace", wordBreak: "break-all" }}>{selectedAgent.sessionKey}</div>
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "12px" }}>
+                <div style={{ flex: 1, padding: "12px", borderRadius: "8px", background: "var(--bg-primary)" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-tertiary)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Started</div>
+                  <div style={{ fontSize: "13px", color: "var(--text-primary)" }}>{new Date(selectedAgent.startedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</div>
+                </div>
+                {selectedAgent.completedAt && (
+                  <div style={{ flex: 1, padding: "12px", borderRadius: "8px", background: "var(--bg-primary)" }}>
+                    <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-tertiary)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Completed</div>
+                    <div style={{ fontSize: "13px", color: "var(--text-primary)" }}>{new Date(selectedAgent.completedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
