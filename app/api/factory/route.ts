@@ -90,11 +90,19 @@ export async function GET() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const completedToday = tasks.filter((t) => {
+    const completedTasksToday = tasks.filter((t) => {
       if (t.status !== "done") return false;
       const date = new Date(t.updatedAt || t.createdAt || "");
       return date >= today;
     }).length;
+
+    const completedAgentsToday = liveAgents.filter((a: Record<string, unknown>) => {
+      if (a.status !== "completed") return false;
+      const date = new Date((a.updatedAt || a.createdAt || "") as string);
+      return date >= today;
+    }).length;
+
+    const completedToday = completedTasksToday + completedAgentsToday;
 
     const activeTasks = tasks.filter(
       (t) => t.status === "in-progress" || t.status === "in-review"

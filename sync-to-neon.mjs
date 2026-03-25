@@ -397,8 +397,14 @@ async function syncAgentStatus() {
         const minsSinceLast = msSinceLast / 60000;
         const scanIntervalMins = 20; // runs every 20 min
         if (minsSinceLast <= 2) {
+          // Currently scanning
           await sql`UPDATE mc_factory_agents SET status='active', task_summary='SCANNING — finding deals...', updated_at=NOW() WHERE id='scout'`;
+        } else if (minsSinceLast <= 5) {
+          // Just finished — show in Done briefly
+          const statusText = `Completed scan — found deals`;
+          await sql`UPDATE mc_factory_agents SET status='completed', task_summary=${statusText}, updated_at=NOW() WHERE id='scout'`;
         } else {
+          // Idle — waiting for next run
           const nextScanMins = Math.max(0, Math.ceil(scanIntervalMins - minsSinceLast));
           const statusText = nextScanMins === 0
             ? "IDLE — scan due now"
