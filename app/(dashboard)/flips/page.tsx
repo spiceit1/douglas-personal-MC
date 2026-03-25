@@ -40,6 +40,10 @@ interface Flip {
   roi: number | null;
   notes: string;
   listings?: PlatformListing[];
+  competitor_floor?: number | null;
+  competitor_listing_id?: string | null;
+  competitor_checkout_url?: string | null;
+  own_listing_id?: string | null;
 }
 
 const PLATFORM_COLORS: Record<string, string> = {
@@ -700,6 +704,30 @@ function MobileFlipCard({
                 const col = PLATFORM_COLORS[l.code] || "#888";
                 return <span key={li} style={{ color: col, fontSize: 11, fontWeight: 700, background: col + "18", padding: "2px 6px", borderRadius: 3 }}>{l.code} {fmt$(l.price)}</span>;
               })}
+            </div>
+          </div>
+        )}
+        {flip.competitor_floor != null && (
+          <div>
+            <div style={{ color: "var(--text-muted)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>Competitor Floor</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12 }}>
+              {(() => {
+                const ourBuyer = (flip.listPrice || 0) * 1.10;
+                const isCompetitive = ourBuyer <= Number(flip.competitor_floor);
+                return (
+                  <>
+                    <span>{isCompetitive ? "✅" : "⚠️"}</span>
+                    {flip.competitor_checkout_url ? (
+                      <a href={flip.competitor_checkout_url} target="_blank" rel="noopener noreferrer" style={{ color: isCompetitive ? "#26c97a" : "#f0b429", fontWeight: 700, textDecoration: "none" }}>
+                        {fmt$(Number(flip.competitor_floor))}
+                      </a>
+                    ) : (
+                      <span style={{ color: isCompetitive ? "#26c97a" : "#f0b429", fontWeight: 700 }}>{fmt$(Number(flip.competitor_floor))}</span>
+                    )}
+                    <span style={{ color: "var(--text-muted)", fontSize: 10 }}>buyer-visible</span>
+                  </>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -2832,6 +2860,38 @@ export default function FlipsPage() {
                         </div>
                       ) : (
                         <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>—</span>
+                      )}
+                      {/* Competitor floor info */}
+                      {flip.competitor_floor != null && (
+                        <div style={{ marginTop: 4, fontSize: "11px", display: "flex", alignItems: "center", gap: 4 }}>
+                          {(() => {
+                            const ourBuyer = (flip.listPrice || 0) * 1.10;
+                            const isCompetitive = ourBuyer <= Number(flip.competitor_floor);
+                            return (
+                              <>
+                                <span style={{ color: isCompetitive ? "#26c97a" : "#f0b429" }}>
+                                  {isCompetitive ? "✅" : "⚠️"}
+                                </span>
+                                <span style={{ color: "var(--text-tertiary)" }}>Floor:</span>
+                                {flip.competitor_checkout_url ? (
+                                  <a
+                                    href={flip.competitor_checkout_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ color: isCompetitive ? "#26c97a" : "#f0b429", fontWeight: 600, textDecoration: "none" }}
+                                    title="Buy competitor listing"
+                                  >
+                                    {fmt$(Number(flip.competitor_floor))}
+                                  </a>
+                                ) : (
+                                  <span style={{ color: isCompetitive ? "#26c97a" : "#f0b429", fontWeight: 600 }}>
+                                    {fmt$(Number(flip.competitor_floor))}
+                                  </span>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
                       )}
                     </td>
 
