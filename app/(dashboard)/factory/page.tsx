@@ -670,9 +670,13 @@ function MobileZoneSection({
   const cfg = ZONE_CONFIG[zoneKey];
   const [collapsed, setCollapsed] = useState(zoneKey === "done");
 
+  // Only show sub-agents as working agents in zones — primary agents are in the PRIMARY AGENTS row
   const workingAgents = agents.filter((a) => {
-    if (zoneKey === "in-progress") return a.status === "active" || a.status === "idle";
-    return false;
+    if (zoneKey !== "in-progress") return false;
+    if (a.status !== "active" && a.status !== "idle") return false;
+    // Exclude primary agents (they're in the AGENTS row already)
+    const isInLiveAgents = liveAgents.some(la => la.name === a.name && la.role !== "Sub-Agent");
+    return !isInLiveAgents;
   });
   const zoneLiveAgents = liveAgents.filter((a) => {
     if (zoneKey === "in-progress") return a.status === "active";
@@ -794,9 +798,12 @@ function FactoryZone({
   onSelectAgent?: (agent: LiveAgent) => void;
 }) {
   const cfg = ZONE_CONFIG[zoneKey];
+  // Only show sub-agents as working agents in zones — primary agents are in the PRIMARY AGENTS row
   const workingAgents = agents.filter((a) => {
-    if (zoneKey === "in-progress") return a.status === "active" || a.status === "idle";
-    return false;
+    if (zoneKey !== "in-progress") return false;
+    if (a.status !== "active" && a.status !== "idle") return false;
+    const isInLiveAgents = liveAgents.some(la => la.name === a.name && la.role !== "Sub-Agent");
+    return !isInLiveAgents;
   });
 
   const zoneLiveAgents = liveAgents.filter((a) => {
