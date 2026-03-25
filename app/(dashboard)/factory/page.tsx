@@ -1303,7 +1303,14 @@ export default function AgentFactoryPage() {
               >
                 <span style={{ fontSize: "18px" }}>{agent.emoji}</span>
                 <div>
-                  <div style={{ fontSize: "13px", color: "#ffffff", fontWeight: 600 }}>{agent.name}</div>
+                  <div style={{ fontSize: "13px", color: "#ffffff", fontWeight: 600 }}>
+                    {agent.name}
+                    {agent.model && (
+                      <span style={{ marginLeft: "8px", fontSize: "9px", color: agent.model?.includes("opus") ? "#f0b429" : agent.model?.includes("haiku") ? "#26c97a" : "#7c5cfc", background: (agent.model?.includes("opus") ? "#f0b429" : agent.model?.includes("haiku") ? "#26c97a" : "#7c5cfc") + "18", border: `1px solid ${agent.model?.includes("opus") ? "#f0b429" : agent.model?.includes("haiku") ? "#26c97a" : "#7c5cfc"}40`, padding: "1px 6px", borderRadius: "8px", fontWeight: 700 }}>
+                        {agent.model}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ fontSize: "10px", color: agent.status === "active" ? "#4d7cfe" : agent.status === "completed" ? "#26c97a" : "#f05b5b", letterSpacing: "0.05em", fontWeight: 600 }}>
                     {agent.status === "active" ? "🔴 LIVE" : agent.status === "completed" ? "✅ DONE" : agent.status.toUpperCase()}
                   </div>
@@ -1356,6 +1363,11 @@ export default function AgentFactoryPage() {
                     <span style={{ marginLeft: "6px", fontSize: "8px", color: "#4d7cfe", background: "#4d7cfe18", border: "1px solid #4d7cfe40", padding: "1px 5px", borderRadius: "3px", fontWeight: 700, letterSpacing: "0.08em" }}>
                       DEDICATED
                     </span>
+                    {agent.model && (
+                      <span style={{ marginLeft: "6px", fontSize: "9px", color: agent.model?.includes("opus") ? "#f0b429" : agent.model?.includes("haiku") ? "#26c97a" : "#7c5cfc", background: (agent.model?.includes("opus") ? "#f0b429" : agent.model?.includes("haiku") ? "#26c97a" : "#7c5cfc") + "18", border: `1px solid ${agent.model?.includes("opus") ? "#f0b429" : agent.model?.includes("haiku") ? "#26c97a" : "#7c5cfc"}40`, padding: "1px 6px", borderRadius: "8px", fontWeight: 700 }}>
+                        {agent.model}
+                      </span>
+                    )}
                   </div>
                   {agent.taskSummary && (
                     <div style={{ fontSize: "9px", color: "#888888", marginTop: 2, maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.taskSummary}</div>
