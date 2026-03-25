@@ -100,12 +100,18 @@ export async function GET() {
       (t) => t.status === "in-progress" || t.status === "in-review"
     ).length;
 
-    // Count from mc_factory_agents only (single source of truth)
-    const activeLiveAgents = liveAgents.filter(
+    // Count all visible agents: factory agents + team dedicated agents (standby/scheduled)
+    const teamDedicated = agents.filter(
+      (a: Record<string, unknown>) => a.status === "standby" || a.status === "scheduled"
+    ).length;
+
+    const factoryActive = liveAgents.filter(
       (a: Record<string, unknown>) => a.status === "active"
     ).length;
 
-    const totalLiveAgents = liveAgents.length;
+    const totalVisible = liveAgents.filter(
+      (a: Record<string, unknown>) => a.status === "active" || a.status === "completed"
+    ).length + teamDedicated;
 
     return NextResponse.json({
       tasks,
@@ -115,9 +121,9 @@ export async function GET() {
       stats: {
         activeTasks,
         completedToday,
-        activeAgents: activeLiveAgents,
-        totalAgents: totalLiveAgents,
-        liveAgentCount: activeLiveAgents,
+        activeAgents: factoryActive,
+        totalAgents: totalVisible,
+        liveAgentCount: factoryActive,
       },
     });
   } catch (e) {
