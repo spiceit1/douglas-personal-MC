@@ -467,6 +467,7 @@ function WorkstationFigure({
   agent: LiveAgent;
   onClick: () => void;
 }) {
+  const figureRef = useRef<HTMLDivElement>(null);
   const isActive = agent.status === "active";
   const colors = getAgentColor(agent.role);
   const modelColor = agent.model?.includes("opus")
