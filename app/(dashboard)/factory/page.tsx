@@ -709,7 +709,7 @@ function MobileZoneSection({
   const [collapsed, setCollapsed] = useState(zoneKey === "done");
 
   const workingAgents = agents.filter((a) => {
-    if (zoneKey === "in-progress") return a.status === "active" || a.status === "idle";
+    if (zoneKey === "in-progress") return a.status === "active";
     return false;
   });
   const zoneLiveAgents = liveAgents.filter((a) => {
@@ -833,7 +833,7 @@ function FactoryZone({
 }) {
   const cfg = ZONE_CONFIG[zoneKey];
   const workingAgents = agents.filter((a) => {
-    if (zoneKey === "in-progress") return a.status === "active" || a.status === "idle";
+    if (zoneKey === "in-progress") return a.status === "active";
     return false;
   });
 
@@ -1266,8 +1266,8 @@ export default function AgentFactoryPage() {
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: "10px", color: agent.status === "active" ? "#4d7cfe" : agent.status === "completed" ? "#26c97a" : "#f05b5b", letterSpacing: "0.05em", fontWeight: 600 }}>
-                    {agent.status === "active" ? "🟢 LIVE" : agent.status === "completed" ? "✅ DONE" : agent.status.toUpperCase()}
+                  <div style={{ fontSize: "10px", color: agent.status === "active" ? "#26c97a" : agent.status === "idle" ? "#9898a0" : agent.status === "completed" ? "#26c97a" : "#f05b5b", letterSpacing: "0.05em", fontWeight: 600 }}>
+                    {agent.status === "active" ? "🟢 LIVE" : agent.status === "idle" ? "○ IDLE" : agent.status === "completed" ? "✅ DONE" : agent.status.toUpperCase()}
                   </div>
                   {agent.taskSummary && (
                     <div style={{ fontSize: "9px", color: "#888888", marginTop: 2, maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.taskSummary}</div>

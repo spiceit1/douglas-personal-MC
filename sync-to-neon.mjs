@@ -337,6 +337,8 @@ async function syncAgentStatus() {
           statusText = "STANDBY — waiting for orders";
         }
         await sql`UPDATE mc_agent_status SET status=${status}, status_text=${statusText}, last_active_at=${updatedAt.toISOString()}, updated_at=NOW() WHERE agent_id='main'`;
+        // Also update mc_factory_agents for Shmack
+        await sql`UPDATE mc_factory_agents SET status=${status}, task_summary=${statusText}, updated_at=NOW() WHERE id='shmack'`;
         // Also update model in mc_team
         const currentModel = mainSession.model || mainSession.modelId || null;
         if (currentModel) {
@@ -367,11 +369,14 @@ async function syncAgentStatus() {
             const updatedAt = new Date(mainSession2.updatedAt || mainSession2.startedAt);
             const minsAgo = (Date.now() - updatedAt.getTime()) / 60000;
             await sql`UPDATE mc_agent_status SET status='idle', status_text=${`IDLE — last active ${Math.round(minsAgo)}m ago`}, last_active_at=${updatedAt.toISOString()}, updated_at=NOW() WHERE agent_id='main'`;
+            await sql`UPDATE mc_factory_agents SET status='idle', task_summary=${`IDLE — last active ${Math.round(minsAgo)}m ago`}, updated_at=NOW() WHERE id='shmack'`;
           } else {
             await sql`UPDATE mc_agent_status SET status='standby', status_text='STANDBY — waiting for orders', updated_at=NOW() WHERE agent_id='main'`;
+            await sql`UPDATE mc_factory_agents SET status='idle', task_summary='STANDBY — waiting for orders', updated_at=NOW() WHERE id='shmack'`;
           }
         } catch {
           await sql`UPDATE mc_agent_status SET status='standby', status_text='STANDBY — waiting for orders', updated_at=NOW() WHERE agent_id='main'`;
+          await sql`UPDATE mc_factory_agents SET status='idle', task_summary='STANDBY — waiting for orders', updated_at=NOW() WHERE id='shmack'`;
         }
       }
     } catch (e) {

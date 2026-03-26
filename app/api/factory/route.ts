@@ -12,7 +12,7 @@ export async function GET() {
       sql`SELECT data FROM mc_team WHERE id = 'config' LIMIT 1`,
       sql`SELECT * FROM mc_scanner WHERE id = 'config' LIMIT 1`,
       sql`SELECT * FROM mc_factory_agents
-          WHERE status IN ('active', 'running', 'standby')
+          WHERE status IN ('active', 'running', 'standby', 'idle')
             OR (status = 'completed' AND updated_at > NOW() - interval '24 hours')
             OR (status = 'failed' AND updated_at > NOW() - interval '24 hours')
           ORDER BY created_at DESC`,
@@ -117,9 +117,16 @@ export async function GET() {
       (a: Record<string, unknown>) => a.status === "active"
     ).length;
 
-    const totalVisible = allActive + teamDedicated + liveAgents.filter(
+    const allIdle = liveAgents.filter(
+      (a: Record<string, unknown>) => a.status === "idle"
+    ).length;
+
+    const allCompleted = liveAgents.filter(
       (a: Record<string, unknown>) => a.status === "completed"
     ).length;
+
+    // Total = all factory agents (active + idle + completed) + team dedicated (standby + scheduled)
+    const totalVisible = allActive + allIdle + allCompleted + teamDedicated;
 
     return NextResponse.json({
       tasks,
