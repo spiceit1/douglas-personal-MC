@@ -1230,10 +1230,20 @@ export default function AgentFactoryPage() {
 
           const renderAgentDesk = (agent: { id: string; name: string; emoji: string; model?: string; status: string; taskSummary?: string; role?: string; source?: string }, clickable: boolean) => {
             const isWorking = agent.status === "active";
+            const isPrimary = agent.role !== "Sub-Agent" && agent.role !== "Dedicated Agent" && agent.role !== "standby" && agent.role !== "scheduled" && agent.status !== "standby" && agent.status !== "scheduled";
+            const isDedicated = agent.role === "Dedicated Agent" || agent.status === "standby" || agent.status === "scheduled" || agent.status === "idle";
             const modelStr = agent.model || "";
             const modelColor = modelStr.includes("opus") ? "#f0b429" : modelStr.includes("haiku") ? "#26c97a" : "#7c5cfc";
             const statusColor = isWorking ? "#26c97a" : agent.status === "idle" ? "#9898a0" : agent.status === "scheduled" ? "#f0b429" : "#ffffff60";
             const statusText = isWorking ? "→ In Progress" : agent.status === "idle" ? (agent.taskSummary || "○ IDLE") : agent.status === "scheduled" ? "⏰ SCHEDULED" : "💤 STANDBY";
+
+            // Color scheme: primary = purple glow, dedicated = blue glow
+            const borderColor = isPrimary
+              ? (isWorking ? "#7c5cfc50" : "#7c5cfc60")
+              : (isWorking ? "#4d7cfe50" : "#4d7cfe60");
+            const bgColor = isPrimary
+              ? (isWorking ? "linear-gradient(135deg, #1a1030 0%, #151525 100%)" : "linear-gradient(135deg, #1a1035 0%, #15102a 100%)")
+              : (isWorking ? "linear-gradient(135deg, #0f1a2e 0%, #101525 100%)" : "linear-gradient(135deg, #0f1a30 0%, #0e1528 100%)");
 
             return (
               <div
@@ -1244,32 +1254,39 @@ export default function AgentFactoryPage() {
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: "4px",
-                  padding: "8px 14px",
-                  background: isWorking ? "var(--bg-tertiary)" : "var(--bg-secondary)",
-                  border: isWorking ? "1px dashed var(--border-default)" : "1px solid var(--border-subtle)",
+                  gap: "3px",
+                  padding: "8px 12px 6px",
+                  background: bgColor,
+                  border: `1px solid ${borderColor}`,
+                  borderTop: `2px solid ${isPrimary ? "#7c5cfc" : "#4d7cfe"}`,
                   borderRadius: "6px",
-                  minWidth: "90px",
-                  opacity: 1,
+                  minWidth: "80px",
                   cursor: clickable && !isWorking ? "pointer" : "default",
                 }}
               >
-                {/* Chair or Agent */}
-                <div style={{ fontSize: "24px", lineHeight: 1 }}>
-                  {isWorking ? "🪑" : agent.emoji}
+                {/* Agent in chair or empty chair */}
+                <div style={{ position: "relative", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {isWorking ? (
+                    <span style={{ fontSize: "28px", lineHeight: 1 }}>🪑</span>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: "22px", lineHeight: 1, position: "absolute", top: "-2px", zIndex: 1 }}>{agent.emoji}</span>
+                      <span style={{ fontSize: "26px", lineHeight: 1, position: "absolute", bottom: "-4px", opacity: 0.5 }}>🪑</span>
+                    </>
+                  )}
                 </div>
                 {/* Name */}
-                <div style={{ fontSize: "11px", fontWeight: 700, color: "#ffffff", textAlign: "center", lineHeight: 1.2 }}>
+                <div style={{ fontSize: "10px", fontWeight: 700, color: "#ffffff", textAlign: "center", lineHeight: 1.2, marginTop: "2px" }}>
                   {agent.name}
                 </div>
                 {/* Model badge */}
                 {modelStr && (
-                  <span style={{ fontSize: "8px", color: modelColor, background: modelColor + "18", border: `1px solid ${modelColor}40`, padding: "1px 5px", borderRadius: "6px", fontWeight: 700 }}>
+                  <span style={{ fontSize: "7px", color: modelColor, background: modelColor + "18", border: `1px solid ${modelColor}40`, padding: "1px 4px", borderRadius: "4px", fontWeight: 700 }}>
                     {modelStr}
                   </span>
                 )}
                 {/* Status */}
-                <div style={{ fontSize: "9px", color: statusColor, fontWeight: 600, textAlign: "center", lineHeight: 1.2, maxWidth: "100px" }}>
+                <div style={{ fontSize: "8px", color: statusColor, fontWeight: 600, textAlign: "center", lineHeight: 1.2, maxWidth: "90px" }}>
                   {statusText}
                 </div>
               </div>
@@ -1285,13 +1302,27 @@ export default function AgentFactoryPage() {
                 background: "var(--bg-elevated)",
               }}
             >
-              {/* All agents in one row */}
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "flex-start" }}>
-                {primaryAgents.map(a => renderAgentDesk(a, true))}
-                {primaryAgents.length > 0 && allDedicated.length > 0 && (
-                  <div style={{ width: "1px", background: "var(--border-subtle)", alignSelf: "stretch", margin: "0 4px" }} />
+              {/* All agents in one row with section labels */}
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "flex-end" }}>
+                {primaryAgents.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    <span style={{ fontSize: "8px", color: "#7c5cfc", letterSpacing: "0.1em", fontWeight: 700 }}>PRIMARY</span>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      {primaryAgents.map(a => renderAgentDesk(a, true))}
+                    </div>
+                  </div>
                 )}
-                {allDedicated.map(a => renderAgentDesk(a, a.source === "factory"))}
+                {primaryAgents.length > 0 && allDedicated.length > 0 && (
+                  <div style={{ width: "1px", background: "var(--border-default)", alignSelf: "stretch", margin: "0 4px" }} />
+                )}
+                {allDedicated.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    <span style={{ fontSize: "8px", color: "#4d7cfe", letterSpacing: "0.1em", fontWeight: 700 }}>DEDICATED</span>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      {allDedicated.map(a => renderAgentDesk(a, a.source === "factory"))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           );
