@@ -641,7 +641,7 @@ function AgentDesk({
 
   // Shmack gets a bigger card — he's the boss
   const cardWidth = isShmackAgent ? 250 : 200;
-  const cardMinHeight = isShmackAgent ? 280 : 240;
+  const cardMinHeight = isShmackAgent ? 220 : 190;
   const deskWidth = isShmackAgent ? 250 : 220;
 
   return (
@@ -666,7 +666,7 @@ function AgentDesk({
           ? `0 0 30px ${accentColor}30, 0 0 80px ${accentColor}10, inset 0 1px 0 ${accentColor}20, 0 4px 24px rgba(0,0,0,0.4)`
           : `0 0 20px ${accentColor}20, 0 0 60px ${accentColor}08, inset 0 1px 0 ${accentColor}15`,
         transition: "box-shadow 0.3s ease, transform 0.2s ease",
-        padding: isShmackAgent ? "10px 12px 8px" : "8px 10px 6px",
+        padding: isShmackAgent ? "6px 10px 6px" : "4px 8px 4px",
       }}
     >
       {/* Subtle top glow line — thicker for Shmack */}
@@ -1059,7 +1059,7 @@ function WorkstationFigure({
         cursor: "pointer",
         position: "relative",
         animation: isActive ? "liveAgentGlow 2s ease-in-out infinite" : "none",
-        opacity: agent.status === "completed" || agent.status === "failed" ? 0.65 : 1,
+        opacity: 1,
         transition: "opacity 0.5s ease",
         boxShadow: isActive ? `0 0 20px ${accentColor}20` : "none",
         overflow: "visible",
