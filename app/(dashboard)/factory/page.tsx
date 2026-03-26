@@ -155,6 +155,190 @@ function isShmack(agent: { id?: string; name?: string }): boolean {
   return agent.id === "shmack" || agent.name === "Mr. Shmack";
 }
 
+// ─── CSS Variables for Factory Theme ─────────────────────────────────────────
+
+const FACTORY_VARS = {
+  appBg: "#11141c",
+  appBg2: "#151926",
+  cardInterior: "#081225",
+  cardInterior2: "#0b1730",
+  accentPrimary: "#7c4dff",
+  accentDedicated: "#3b82ff",
+  accentSubAgent: "#26c97a",
+  desk: "#1b2230",
+  desk2: "#222b3d",
+  deskFront: "#151c2a",
+  chairBase: "#6b4f3a",
+  chairHighlight: "#8a674f",
+  chairShadow: "#3e2c20",
+  skinDefault: "#d4a574",
+  skinShmack: "#f5d0b0",
+  shirtBlue: "#4488dd",
+};
+
+// ─── Premium Office Chair Component ──────────────────────────────────────────
+
+function OfficeChair({ empty = false, scale = 1, premium = false }: { empty?: boolean; scale?: number; premium?: boolean }) {
+  const s = scale;
+  // Premium chair: richer leather, gold accents, taller backrest
+  const base = premium ? "#7a5a3a" : FACTORY_VARS.chairBase;
+  const highlight = premium ? "#a07850" : FACTORY_VARS.chairHighlight;
+  const shadow = premium ? "#4a3220" : FACTORY_VARS.chairShadow;
+  const stitch = premium ? "#c49a60" : FACTORY_VARS.chairHighlight;
+  const metalColor = premium ? "#b8960a" : "#555";
+  const metalHighlight = premium ? "#d4b020" : "#444";
+  const wheelColor = premium ? "#665520" : "#444";
+  const wheelBorder = premium ? "#887730" : "#555";
+  const backrestH = premium ? (empty ? 52 : 44) : (empty ? 44 : 36);
+  const headrestH = premium ? 18 : 14;
+
+  return (
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      position: "relative",
+    }}>
+      {/* Headrest */}
+      <div style={{
+        width: 32 * s,
+        height: headrestH * s,
+        background: `linear-gradient(180deg, ${highlight} 0%, ${base} 100%)`,
+        borderRadius: `${8 * s}px ${8 * s}px ${4 * s}px ${4 * s}px`,
+        border: `1.5px solid ${shadow}`,
+        boxShadow: `inset 0 2px 4px rgba(138,103,79,0.3), inset 0 -2px 3px rgba(62,44,32,0.3)${premium ? `, 0 0 6px rgba(180,150,10,0.15)` : ""}`,
+        marginBottom: 2 * s,
+        zIndex: 1,
+        position: "relative",
+      }}>
+        {/* Premium gold trim on headrest */}
+        {premium && (
+          <div style={{
+            position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+            width: "70%", height: 2, background: "linear-gradient(90deg, transparent, #d4b02060, #d4b020, #d4b02060, transparent)",
+            borderRadius: 1,
+          }} />
+        )}
+      </div>
+      {/* Backrest */}
+      <div style={{
+        width: 40 * s,
+        height: backrestH * s,
+        background: `linear-gradient(180deg, ${base} 0%, ${shadow} 100%)`,
+        borderRadius: `${6 * s}px ${6 * s}px ${10 * s}px ${10 * s}px`,
+        border: `1.5px solid ${shadow}`,
+        boxShadow: `inset 0 4px 8px rgba(138,103,79,0.2), inset 0 -4px 6px rgba(62,44,32,0.4)${premium ? `, 0 0 8px rgba(180,150,10,0.1)` : ""}`,
+        position: "relative",
+        zIndex: 1,
+      }}>
+        {/* Leather stitching lines */}
+        <div style={{
+          position: "absolute", top: "20%", left: "50%", transform: "translateX(-50%)",
+          width: "60%", height: "1px", background: stitch, opacity: premium ? 0.5 : 0.3,
+        }} />
+        <div style={{
+          position: "absolute", top: "45%", left: "50%", transform: "translateX(-50%)",
+          width: "60%", height: "1px", background: stitch, opacity: premium ? 0.5 : 0.3,
+        }} />
+        <div style={{
+          position: "absolute", top: "70%", left: "50%", transform: "translateX(-50%)",
+          width: "60%", height: "1px", background: stitch, opacity: premium ? 0.4 : 0.25,
+        }} />
+        {/* Diamond tufting for premium */}
+        {premium && (
+          <>
+            <div style={{
+              position: "absolute", top: "32%", left: "50%", transform: "translate(-50%, -50%)",
+              width: 6 * s, height: 6 * s, borderRadius: "50%",
+              background: highlight, opacity: 0.3,
+              boxShadow: `inset 0 1px 2px rgba(0,0,0,0.3)`,
+            }} />
+            <div style={{
+              position: "absolute", top: "58%", left: "50%", transform: "translate(-50%, -50%)",
+              width: 6 * s, height: 6 * s, borderRadius: "50%",
+              background: highlight, opacity: 0.3,
+              boxShadow: `inset 0 1px 2px rgba(0,0,0,0.3)`,
+            }} />
+          </>
+        )}
+      </div>
+      {/* Armrests */}
+      <div style={{
+        position: "absolute",
+        top: (premium ? (empty ? 48 : 40) : (empty ? 42 : 34)) * s,
+        left: -6 * s,
+        width: (premium ? 12 : 10) * s,
+        height: (premium ? 24 : 20) * s,
+        background: `linear-gradient(180deg, ${highlight} 0%, ${base} 100%)`,
+        borderRadius: `${4 * s}px`,
+        border: `1px solid ${shadow}`,
+        zIndex: 3,
+      }}>
+        {/* Gold armrest cap for premium */}
+        {premium && (
+          <div style={{
+            position: "absolute", top: -1, left: 0, right: 0, height: 3 * s,
+            background: `linear-gradient(180deg, ${metalHighlight} 0%, ${metalColor} 100%)`,
+            borderRadius: `${4 * s}px ${4 * s}px 0 0`,
+          }} />
+        )}
+      </div>
+      <div style={{
+        position: "absolute",
+        top: (premium ? (empty ? 48 : 40) : (empty ? 42 : 34)) * s,
+        right: -6 * s,
+        width: (premium ? 12 : 10) * s,
+        height: (premium ? 24 : 20) * s,
+        background: `linear-gradient(180deg, ${highlight} 0%, ${base} 100%)`,
+        borderRadius: `${4 * s}px`,
+        border: `1px solid ${shadow}`,
+        zIndex: 3,
+      }}>
+        {premium && (
+          <div style={{
+            position: "absolute", top: -1, left: 0, right: 0, height: 3 * s,
+            background: `linear-gradient(180deg, ${metalHighlight} 0%, ${metalColor} 100%)`,
+            borderRadius: `${4 * s}px ${4 * s}px 0 0`,
+          }} />
+        )}
+      </div>
+      {/* Seat */}
+      <div style={{
+        width: 48 * s,
+        height: 12 * s,
+        background: `linear-gradient(180deg, ${highlight} 0%, ${base} 100%)`,
+        borderRadius: `${4 * s}px ${4 * s}px ${6 * s}px ${6 * s}px`,
+        border: `1.5px solid ${shadow}`,
+        boxShadow: `inset 0 2px 6px rgba(138,103,79,0.3)`,
+        marginTop: 1 * s,
+        zIndex: 2,
+      }} />
+      {/* Post — gold for premium */}
+      <div style={{
+        width: 6 * s,
+        height: 14 * s,
+        background: `linear-gradient(180deg, ${metalColor} 0%, ${premium ? "#665520" : "#333"} 100%)`,
+        marginTop: -1,
+        zIndex: 1,
+      }} />
+      {/* Base star */}
+      <div style={{
+        width: 42 * s,
+        height: 5 * s,
+        background: `linear-gradient(180deg, ${metalColor} 0%, ${metalHighlight} 100%)`,
+        borderRadius: `${3 * s}px`,
+        border: `1px solid ${premium ? "#554410" : "#333"}`,
+        zIndex: 1,
+      }} />
+      {/* Wheels */}
+      <div style={{ display: "flex", gap: 24 * s, marginTop: 1 }}>
+        <div style={{ width: 7 * s, height: 7 * s, borderRadius: "50%", background: wheelColor, border: `1px solid ${wheelBorder}` }} />
+        <div style={{ width: 7 * s, height: 7 * s, borderRadius: "50%", background: wheelColor, border: `1px solid ${wheelBorder}` }} />
+      </div>
+    </div>
+  );
+}
+
 // ─── Person Figure Component ─────────────────────────────────────────────────
 
 function PersonFigure({
@@ -166,6 +350,7 @@ function PersonFigure({
   sitting = false,
   agentId,
   agentName,
+  pose,
 }: {
   emoji: string;
   role: string;
@@ -175,26 +360,27 @@ function PersonFigure({
   sitting?: boolean;
   agentId?: string;
   agentName?: string;
+  pose?: "mouse" | "keyboard" | "thinking" | "relaxed" | "standing";
 }) {
   const colors = getAgentColor(role, status);
   const isSmall = size === "small";
-  const headSize = isSmall ? 14 : 18;
-  const bodyW = isSmall ? 22 : 28;
-  const bodyH = isSmall ? 16 : 22;
-  const fontSize = isSmall ? 9 : 12;
-  const legW = isSmall ? 5 : 6;
-  const legH = isSmall ? 8 : 10;
   const isShmackAgent = isShmack({ id: agentId, name: agentName });
-  const skinColor = isShmackAgent ? "#f5d0b0" : "#d4a574";
+  const skinColor = isShmackAgent ? FACTORY_VARS.skinShmack : FACTORY_VARS.skinDefault;
   const skinBorder = isShmackAgent ? "#e8c0a0" : "#c4956a";
-  const hairStyle = isShmackAgent ? "redspiky" : "short";
+  // Shmack always wears purple — he's the boss
+  const shirtColor = isShmackAgent ? "#7c5cfc" : colors.shirt;
+  const shirtBorder = isShmackAgent ? "#9b7cff" : colors.border;
 
-  // Mii-style proportions: big head, small body
-  const miiHeadSize = isSmall ? 20 : 28;
-  const miiBodyW = isSmall ? 20 : 26;
-  const miiBodyH = isSmall ? 14 : 20;
-  const miiEmoji = isSmall ? 8 : 11;
+  const headSize = isSmall ? 20 : (isShmackAgent ? 33 : 30);
+  const bodyW = isSmall ? 22 : (isShmackAgent ? 36 : 32);
+  const bodyH = isSmall ? 16 : (isShmackAgent ? 26 : 24);
+  const emojiSize = isSmall ? 9 : (isShmackAgent ? 15 : 13);
   const eyeSize = isSmall ? 2 : 3;
+  const armW = isSmall ? 6 : 8;
+  const armH = isSmall ? 14 : 20;
+  const handSize = isSmall ? 7 : 10;
+
+  const activePose = pose || "standing";
 
   return (
     <div
@@ -202,134 +388,205 @@ function PersonFigure({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        position: "relative",
         animation: bouncing ? "agentBounce 1s ease-in-out infinite" : "none",
       }}
     >
       {/* Hair */}
       {isShmackAgent ? (
-        /* Red spiky hair for Shmack */
-        <div style={{ display: "flex", gap: 1, marginBottom: isSmall ? -6 : -8, zIndex: 3 }}>
-          <div style={{ width: isSmall ? 4 : 6, height: isSmall ? 6 : 10, background: "#c0442a", borderRadius: "50% 50% 20% 20%", transform: "rotate(-15deg)" }} />
-          <div style={{ width: isSmall ? 5 : 7, height: isSmall ? 8 : 12, background: "#d45535", borderRadius: "50% 50% 20% 20%" }} />
-          <div style={{ width: isSmall ? 4 : 6, height: isSmall ? 6 : 10, background: "#c0442a", borderRadius: "50% 50% 20% 20%", transform: "rotate(15deg)" }} />
+        <div style={{ display: "flex", gap: isSmall ? 1 : 0, marginBottom: isSmall ? -8 : -10, zIndex: 5, position: "relative" }}>
+          <div style={{ width: isSmall ? 5 : 6, height: isSmall ? 7 : 14, background: "#b03820", borderRadius: "50% 50% 20% 20%", transform: "rotate(-30deg)", marginRight: -1 }} />
+          <div style={{ width: isSmall ? 4 : 7, height: isSmall ? 9 : 18, background: "#c0442a", borderRadius: "50% 50% 20% 20%", transform: "rotate(-12deg)" }} />
+          <div style={{ width: isSmall ? 5 : 8, height: isSmall ? 10 : 20, background: "#d45535", borderRadius: "50% 50% 15% 15%", transform: "rotate(-3deg)" }} />
+          <div style={{ width: isSmall ? 5 : 9, height: isSmall ? 11 : 22, background: "#e06040", borderRadius: "50% 50% 15% 15%" }} />
+          <div style={{ width: isSmall ? 5 : 8, height: isSmall ? 10 : 20, background: "#d45535", borderRadius: "50% 50% 15% 15%", transform: "rotate(3deg)" }} />
+          <div style={{ width: isSmall ? 4 : 7, height: isSmall ? 9 : 18, background: "#c0442a", borderRadius: "50% 50% 20% 20%", transform: "rotate(12deg)" }} />
+          <div style={{ width: isSmall ? 5 : 6, height: isSmall ? 7 : 14, background: "#b03820", borderRadius: "50% 50% 20% 20%", transform: "rotate(30deg)", marginLeft: -1 }} />
         </div>
-      ) : hairStyle !== "none" ? (
-        /* Generic hair */
+      ) : (
         <div style={{
-          width: miiHeadSize * 0.85,
-          height: isSmall ? 5 : 8,
-          background: "#4a3520",
-          borderRadius: `${isSmall ? 4 : 6}px ${isSmall ? 4 : 6}px 1px 1px`,
-          marginBottom: isSmall ? -5 : -7,
-          zIndex: 3,
+          width: headSize * 0.9,
+          height: isSmall ? 6 : 10,
+          background: "#3a2a1a",
+          borderRadius: `${isSmall ? 5 : 8}px ${isSmall ? 5 : 8}px 1px 1px`,
+          marginBottom: isSmall ? -5 : -8,
+          zIndex: 5,
+          position: "relative",
         }} />
-      ) : null}
-      
-      {/* Head — big Mii-style */}
+      )}
+
+      {/* Head */}
       <div style={{
-        width: miiHeadSize,
-        height: miiHeadSize,
+        width: headSize,
+        height: headSize,
         borderRadius: "50%",
         background: skinColor,
-        border: `1.5px solid ${skinBorder}`,
-        marginBottom: -3,
-        zIndex: 2,
+        border: `2px solid ${skinBorder}`,
+        zIndex: 4,
         position: "relative",
-        boxShadow: "inset 0 -2px 4px rgba(0,0,0,0.1)",
+        boxShadow: "inset 0 -3px 6px rgba(0,0,0,0.1)",
       }}>
         {/* Eyes */}
         {!isSmall && (
           <>
-            <div style={{ position: "absolute", left: "22%", top: "38%", width: eyeSize * 2, height: eyeSize * 2.2, borderRadius: "50%", background: "white" }}>
-              <div style={{ position: "absolute", right: 0, top: "15%", width: eyeSize * 1.3, height: eyeSize * 1.3, borderRadius: "50%", background: "#2a2a3a" }}>
-                <div style={{ position: "absolute", right: 1, top: 1, width: eyeSize * 0.5, height: eyeSize * 0.5, borderRadius: "50%", background: "white" }} />
-              </div>
-            </div>
-            <div style={{ position: "absolute", right: "22%", top: "38%", width: eyeSize * 2, height: eyeSize * 2.2, borderRadius: "50%", background: "white" }}>
-              <div style={{ position: "absolute", right: 0, top: "15%", width: eyeSize * 1.3, height: eyeSize * 1.3, borderRadius: "50%", background: "#2a2a3a" }}>
-                <div style={{ position: "absolute", right: 1, top: 1, width: eyeSize * 0.5, height: eyeSize * 0.5, borderRadius: "50%", background: "white" }} />
-              </div>
-            </div>
-            {/* Smile */}
             <div style={{
-              position: "absolute", bottom: "20%", left: "50%", transform: "translateX(-50%)",
-              width: miiHeadSize * 0.35, height: miiHeadSize * 0.15,
-              borderBottom: `1.5px solid ${skinBorder}`,
+              position: "absolute", left: "20%", top: "36%",
+              width: eyeSize * 2.2, height: eyeSize * 2.4,
+              borderRadius: "50%", background: "white",
+            }}>
+              <div style={{
+                position: "absolute", right: 0, top: "20%",
+                width: eyeSize * 1.4, height: eyeSize * 1.4,
+                borderRadius: "50%", background: "#2a2a3a",
+              }}>
+                <div style={{
+                  position: "absolute", right: 1, top: 1,
+                  width: eyeSize * 0.5, height: eyeSize * 0.5,
+                  borderRadius: "50%", background: "white",
+                }} />
+              </div>
+            </div>
+            <div style={{
+              position: "absolute", right: "20%", top: "36%",
+              width: eyeSize * 2.2, height: eyeSize * 2.4,
+              borderRadius: "50%", background: "white",
+            }}>
+              <div style={{
+                position: "absolute", right: 0, top: "20%",
+                width: eyeSize * 1.4, height: eyeSize * 1.4,
+                borderRadius: "50%", background: "#2a2a3a",
+              }}>
+                <div style={{
+                  position: "absolute", right: 1, top: 1,
+                  width: eyeSize * 0.5, height: eyeSize * 0.5,
+                  borderRadius: "50%", background: "white",
+                }} />
+              </div>
+            </div>
+            {/* Mouth */}
+            <div style={{
+              position: "absolute", bottom: "18%", left: "50%", transform: "translateX(-50%)",
+              width: headSize * 0.3, height: headSize * 0.12,
+              borderBottom: `2px solid ${skinBorder}`,
               borderRadius: "0 0 50% 50%",
             }} />
-            {/* Blush */}
-            <div style={{ position: "absolute", left: "8%", top: "55%", width: eyeSize * 2.5, height: eyeSize * 1.2, borderRadius: "50%", background: "#ff9999", opacity: 0.15 }} />
-            <div style={{ position: "absolute", right: "8%", top: "55%", width: eyeSize * 2.5, height: eyeSize * 1.2, borderRadius: "50%", background: "#ff9999", opacity: 0.15 }} />
           </>
         )}
       </div>
 
-      {/* Body/Shirt with emoji */}
-      <div style={{
-        width: miiBodyW,
-        height: miiBodyH,
-        borderRadius: `${isSmall ? 4 : 6}px ${isSmall ? 4 : 6}px 2px 2px`,
-        background: `linear-gradient(180deg, ${colors.shirt} 0%, ${colors.shirt}dd 100%)`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: miiEmoji,
-        lineHeight: 1,
-        zIndex: 2,
-        border: `1px solid ${colors.border}`,
-        boxShadow: bouncing ? `0 0 12px ${colors.glow}` : "none",
-      }}>
-        {emoji}
-      </div>
-
-      {/* Arms */}
+      {/* Body + Arms + Hands — integrated unit */}
       <div style={{
         position: "relative",
-        marginTop: -(miiBodyH + 4),
-        width: miiBodyW + (isSmall ? 10 : 14),
-        height: miiBodyH,
-        zIndex: 1,
-        pointerEvents: "none",
+        marginTop: -3,
+        zIndex: 3,
+        width: bodyW + armW * 2 + 8,
+        display: "flex",
+        justifyContent: "center",
       }}>
-        <div style={{ position: "absolute", left: 0, top: isSmall ? 2 : 3, width: isSmall ? 5 : 7, height: isSmall ? 10 : 14, borderRadius: isSmall ? 3 : 4, background: colors.shirt, border: `1px solid ${colors.border}` }} />
-        <div style={{ position: "absolute", right: 0, top: isSmall ? 2 : 3, width: isSmall ? 5 : 7, height: isSmall ? 10 : 14, borderRadius: isSmall ? 3 : 4, background: colors.shirt, border: `1px solid ${colors.border}` }} />
-        {/* Hands */}
-        <div style={{ position: "absolute", left: isSmall ? -1 : -1, bottom: isSmall ? -2 : -3, width: isSmall ? 6 : 8, height: isSmall ? 6 : 8, borderRadius: "50%", background: skinColor, border: `1px solid ${skinBorder}` }} />
-        <div style={{ position: "absolute", right: isSmall ? -1 : -1, bottom: isSmall ? -2 : -3, width: isSmall ? 6 : 8, height: isSmall ? 6 : 8, borderRadius: "50%", background: skinColor, border: `1px solid ${skinBorder}` }} />
+        {/* Left arm — connects from shoulder to hand */}
+        <div style={{
+          position: "absolute",
+          left: activePose === "thinking" ? 2 : 0,
+          top: activePose === "thinking" ? -4 : 3,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          zIndex: activePose === "thinking" ? 5 : 2,
+          transform: activePose === "thinking" ? "rotate(30deg)" : "none",
+        }}>
+          <div style={{
+            width: armW,
+            height: activePose === "thinking" ? armH - 4 : armH,
+            borderRadius: armW / 2,
+            background: `linear-gradient(180deg, ${shirtColor} 0%, ${shirtColor}cc 100%)`,
+            border: `1px solid ${shirtBorder}`,
+          }} />
+          <div style={{
+            width: handSize,
+            height: handSize * 0.8,
+            borderRadius: "50%",
+            background: skinColor,
+            border: `1px solid ${skinBorder}`,
+            marginTop: -2,
+          }} />
+        </div>
+
+        {/* Torso */}
+        <div style={{
+          width: bodyW,
+          height: bodyH,
+          borderRadius: `${isSmall ? 5 : 8}px ${isSmall ? 5 : 8}px 3px 3px`,
+          background: `linear-gradient(180deg, ${shirtColor} 0%, ${shirtColor}dd 100%)`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: emojiSize,
+          lineHeight: 1,
+          border: `1.5px solid ${shirtBorder}`,
+          boxShadow: bouncing ? `0 0 14px ${colors.glow}` : (isShmackAgent && !isSmall ? `0 0 10px rgba(124,92,252,0.25)` : "none"),
+          zIndex: 3,
+        }}>
+          {emoji}
+        </div>
+
+        {/* Right arm */}
+        <div style={{
+          position: "absolute",
+          right: activePose === "relaxed" ? 4 : 0,
+          top: 3,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          zIndex: 2,
+        }}>
+          <div style={{
+            width: armW,
+            height: armH,
+            borderRadius: armW / 2,
+            background: `linear-gradient(180deg, ${shirtColor} 0%, ${shirtColor}cc 100%)`,
+            border: `1px solid ${shirtBorder}`,
+          }} />
+          <div style={{
+            width: handSize,
+            height: handSize * 0.8,
+            borderRadius: "50%",
+            background: skinColor,
+            border: `1px solid ${skinBorder}`,
+            marginTop: -2,
+          }} />
+        </div>
       </div>
-      <div style={{ height: miiBodyH - 2 }} />
 
       {/* Legs */}
-      {!sitting && (
-        <div style={{ display: "flex", gap: isSmall ? 3 : 4, marginTop: -2, zIndex: 1 }}>
+      {!sitting ? (
+        <div style={{ display: "flex", gap: isSmall ? 3 : 5, marginTop: -1, zIndex: 2 }}>
           <div style={{
-            width: isSmall ? 5 : 7,
-            height: isSmall ? 8 : 12,
+            width: isSmall ? 6 : 8,
+            height: isSmall ? 10 : 14,
             background: "#3a3a50",
-            borderRadius: "2px 2px 3px 3px",
+            borderRadius: "2px 2px 4px 4px",
             border: "1px solid #4a4a60",
           }} />
           <div style={{
-            width: isSmall ? 5 : 7,
-            height: isSmall ? 8 : 12,
+            width: isSmall ? 6 : 8,
+            height: isSmall ? 10 : 14,
             background: "#3a3a50",
-            borderRadius: "2px 2px 3px 3px",
+            borderRadius: "2px 2px 4px 4px",
             border: "1px solid #4a4a60",
           }} />
         </div>
-      )}
-      {sitting && (
-        <div style={{ display: "flex", gap: isSmall ? 4 : 6, marginTop: -1, zIndex: 1 }}>
+      ) : (
+        <div style={{ display: "flex", gap: isSmall ? 5 : 7, marginTop: -1, zIndex: 2 }}>
           <div style={{
-            width: isSmall ? 7 : 10,
-            height: isSmall ? 5 : 7,
+            width: isSmall ? 8 : 12,
+            height: isSmall ? 6 : 8,
             background: "#3a3a50",
             borderRadius: "3px",
             border: "1px solid #4a4a60",
           }} />
           <div style={{
-            width: isSmall ? 7 : 10,
-            height: isSmall ? 5 : 7,
+            width: isSmall ? 8 : 12,
+            height: isSmall ? 6 : 8,
             background: "#3a3a50",
             borderRadius: "3px",
             border: "1px solid #4a4a60",
@@ -340,7 +597,7 @@ function PersonFigure({
   );
 }
 
-// ─── Desk Component (with chair + nameplate) ────────────────────────────────
+// ─── Premium Desk Card Component ─────────────────────────────────────────────
 
 function AgentDesk({
   agent,
@@ -354,6 +611,7 @@ function AgentDesk({
   onMount?: (el: HTMLDivElement | null) => void;
 }) {
   const primary = isPrimaryAgent(agent.role, agent.status);
+  const isSub = agent.role === "Sub-Agent";
   const colors = getAgentColor(agent.role, agent.status);
   const modelStr = agent.model || "";
   const modelColor = modelStr.includes("opus") ? "#f0b429" : modelStr.includes("haiku") ? "#26c97a" : "#7c5cfc";
@@ -366,7 +624,25 @@ function AgentDesk({
     ? "⏰ SCHEDULED"
     : "💤 STANDBY";
 
-  const accentColor = primary ? "#7c5cfc" : "#4d7cfe";
+  const accentColor = isSub ? FACTORY_VARS.accentSubAgent : primary ? FACTORY_VARS.accentPrimary : FACTORY_VARS.accentDedicated;
+  const isShmackAgent = isShmack(agent);
+
+  // Determine pose based on agent
+  const agentPose: "mouse" | "keyboard" | "thinking" | "relaxed" | "standing" = (() => {
+    const n = agent.name.toLowerCase();
+    if (n.includes("scout")) return "mouse";
+    if (n.includes("analyst")) return "keyboard";
+    if (n.includes("strategist")) return "thinking";
+    if (n.includes("night")) return "relaxed";
+    return "standing";
+  })();
+
+  const showMug = isShmackAgent;
+
+  // Shmack gets a bigger card — he's the boss
+  const cardWidth = isShmackAgent ? 290 : 260;
+  const cardMinHeight = isShmackAgent ? 420 : 380;
+  const deskWidth = isShmackAgent ? 250 : 220;
 
   return (
     <div
@@ -376,174 +652,351 @@ function AgentDesk({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: "2px",
-        padding: "8px 14px 6px",
-        background: isWorking
-          ? `linear-gradient(135deg, ${colors.bg}80 0%, #151520 100%)`
-          : `linear-gradient(135deg, ${colors.bg} 0%, #151520 100%)`,
-        border: `1px solid ${accentColor}${isWorking ? "30" : "50"}`,
-        borderTop: `2px solid ${accentColor}`,
-        borderRadius: "6px",
-        minWidth: "85px",
+        width: cardWidth,
+        minHeight: cardMinHeight,
+        background: isShmackAgent
+          ? `linear-gradient(145deg, #0c0820 0%, ${FACTORY_VARS.cardInterior2} 40%, #0e0625 100%)`
+          : `linear-gradient(145deg, ${FACTORY_VARS.cardInterior} 0%, ${FACTORY_VARS.cardInterior2} 100%)`,
+        border: `1.5px solid ${accentColor}${isShmackAgent ? "70" : "50"}`,
+        borderRadius: 20,
         cursor: onClick && !isWorking ? "pointer" : "default",
-        opacity: 1,
-        transition: "opacity 0.3s ease",
         position: "relative",
+        overflow: "hidden",
+        boxShadow: isShmackAgent
+          ? `0 0 30px ${accentColor}30, 0 0 80px ${accentColor}10, inset 0 1px 0 ${accentColor}20, 0 4px 24px rgba(0,0,0,0.4)`
+          : `0 0 20px ${accentColor}20, 0 0 60px ${accentColor}08, inset 0 1px 0 ${accentColor}15`,
+        transition: "box-shadow 0.3s ease, transform 0.2s ease",
+        padding: isShmackAgent ? "18px 14px 16px" : "16px 12px 14px",
       }}
     >
-      {/* Desk scene */}
+      {/* Subtle top glow line — thicker for Shmack */}
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: isShmackAgent ? "5%" : "10%",
+        right: isShmackAgent ? "5%" : "10%",
+        height: isShmackAgent ? 3 : 2,
+        background: `linear-gradient(90deg, transparent, ${accentColor}${isShmackAgent ? "80" : "60"}, transparent)`,
+        borderRadius: "0 0 4px 4px",
+      }} />
+      {/* Corner accent dots for Shmack */}
+      {isShmackAgent && (
+        <>
+          <div style={{ position: "absolute", top: 8, left: 8, width: 4, height: 4, borderRadius: "50%", background: `${accentColor}40` }} />
+          <div style={{ position: "absolute", top: 8, right: 8, width: 4, height: 4, borderRadius: "50%", background: `${accentColor}40` }} />
+        </>
+      )}
+
+      {/* ─── SCENE: Chair + Agent + Desk ─── */}
+      <div style={{
+        position: "relative",
+        width: "100%",
+        height: isShmackAgent ? 250 : 220,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "flex-end",
+      }}>
+        {/* Layer 1: Chair (z:1) */}
+        <div style={{
+          position: "absolute",
+          bottom: isShmackAgent ? 74 : 68,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 1,
+        }}>
+          <OfficeChair empty={isWorking} scale={isWorking ? 1 : (isShmackAgent ? 0.95 : 0.85)} premium={isShmackAgent} />
+        </div>
+
+        {/* Layer 2: Seated Agent (z:2) */}
+        {!isWorking && (
+          <div style={{
+            position: "absolute",
+            bottom: isShmackAgent ? 100 : 88,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 2,
+          }}>
+            <PersonFigure
+              emoji={agent.emoji}
+              role={agent.role}
+              status={agent.status}
+              sitting={true}
+              agentId={agent.id}
+              agentName={agent.name}
+              pose={agentPose}
+            />
+          </div>
+        )}
+
+        {/* Layer 3: Desk (z:3) */}
+        <div style={{
+          position: "absolute",
+          bottom: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 3,
+          width: deskWidth,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}>
+          {/* Desk top surface */}
+          <div style={{
+            width: deskWidth,
+            height: isShmackAgent ? 10 : 8,
+            background: isShmackAgent
+              ? `linear-gradient(180deg, #2a3550 0%, ${FACTORY_VARS.desk} 100%)`
+              : `linear-gradient(180deg, ${FACTORY_VARS.desk2} 0%, ${FACTORY_VARS.desk} 100%)`,
+            borderRadius: "4px 4px 0 0",
+            border: `1px solid ${isShmackAgent ? "#3a4560" : "#2a3548"}`,
+            borderBottom: "none",
+            position: "relative",
+          }}>
+            {/* Items on desk */}
+            <div style={{
+              position: "absolute",
+              top: -36,
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              alignItems: "flex-end",
+              gap: 14,
+              zIndex: 4,
+            }}>
+              {/* Monitor — bigger for Shmack */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <div style={{
+                  width: isShmackAgent ? 52 : 44,
+                  height: isShmackAgent ? 36 : 30,
+                  background: "#0a0f1a",
+                  border: `2px solid ${accentColor}30`,
+                  borderRadius: "4px 4px 0 0",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: `0 0 12px ${accentColor}15, inset 0 0 20px ${accentColor}08`,
+                  position: "relative",
+                  overflow: "hidden",
+                }}>
+                  {!isWorking && (
+                    <>
+                      <div style={{ width: isShmackAgent ? 26 : 20, height: 2, background: accentColor, borderRadius: 1, opacity: 0.4 }} />
+                      <div style={{ position: "absolute", bottom: 4, left: 6, width: isShmackAgent ? 18 : 14, height: 1.5, background: accentColor, borderRadius: 1, opacity: 0.2 }} />
+                      <div style={{ position: "absolute", bottom: 8, left: 6, width: isShmackAgent ? 30 : 24, height: 1.5, background: accentColor, borderRadius: 1, opacity: 0.15 }} />
+                    </>
+                  )}
+                  {isWorking && (
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#333", border: "1px solid #444" }} />
+                  )}
+                </div>
+                {/* Monitor stand */}
+                <div style={{ width: 6, height: 6, background: "#333" }} />
+                <div style={{ width: isShmackAgent ? 22 : 18, height: 3, background: "#333", borderRadius: 2 }} />
+              </div>
+
+              {/* Keyboard (only if not working) */}
+              {!isWorking && (
+                <div style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: "50%",
+                  transform: "translateX(-50%) translateY(2px)",
+                  width: 36,
+                  height: 10,
+                  background: "#2a2a3a",
+                  border: "1px solid #3a3a4a",
+                  borderRadius: 2,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 1,
+                  padding: 2,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                  {[...Array(12)].map((_, i) => (
+                    <div key={i} style={{ width: 3, height: 2, background: "#4a4a5a", borderRadius: 0.5 }} />
+                  ))}
+                </div>
+              )}
+
+              {/* Mug (for Shmack) — with BOSS text */}
+              {showMug && (
+                <div style={{
+                  position: "absolute",
+                  right: isShmackAgent ? -36 : -30,
+                  bottom: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}>
+                  <div style={{
+                    width: 16,
+                    height: 18,
+                    background: "linear-gradient(180deg, #e8e8e8 0%, #d0d0d0 100%)",
+                    borderRadius: "2px 2px 4px 4px",
+                    border: "1px solid #bbb",
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}>
+                    {/* BOSS text */}
+                    <span style={{
+                      fontSize: 5,
+                      fontWeight: 900,
+                      color: "#7c5cfc",
+                      letterSpacing: "0.03em",
+                      fontFamily: "Arial, sans-serif",
+                      lineHeight: 1,
+                    }}>BOSS</span>
+                    {/* Handle */}
+                    <div style={{
+                      position: "absolute",
+                      right: -7,
+                      top: 3,
+                      width: 7,
+                      height: 10,
+                      borderRadius: "0 5px 5px 0",
+                      border: "2px solid #bbb",
+                      borderLeft: "none",
+                    }} />
+                    {/* Steam wisps */}
+                    <div style={{
+                      position: "absolute",
+                      top: -8,
+                      left: "30%",
+                      fontSize: 7,
+                      opacity: 0.35,
+                      animation: "agentBounce 2.5s ease-in-out infinite",
+                      color: "#aaa",
+                    }}>~</div>
+                    <div style={{
+                      position: "absolute",
+                      top: -10,
+                      left: "60%",
+                      fontSize: 6,
+                      opacity: 0.25,
+                      animation: "agentBounce 3s ease-in-out infinite 0.5s",
+                      color: "#aaa",
+                    }}>~</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Desk front panel */}
+          <div style={{
+            width: deskWidth,
+            height: isShmackAgent ? 56 : 50,
+            background: isShmackAgent
+              ? `linear-gradient(180deg, ${FACTORY_VARS.desk} 0%, #101520 100%)`
+              : `linear-gradient(180deg, ${FACTORY_VARS.desk} 0%, ${FACTORY_VARS.deskFront} 100%)`,
+            border: `1px solid ${isShmackAgent ? "#3a4560" : "#2a3548"}`,
+            borderTop: "none",
+            borderRadius: "0 0 6px 6px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            position: "relative",
+          }}>
+            {/* Nameplate plaque — premium for Shmack */}
+            <div style={{
+              background: isShmackAgent
+                ? "linear-gradient(180deg, #2a2040 0%, #1a1530 100%)"
+                : "linear-gradient(180deg, #2a2e3a 0%, #1e222e 100%)",
+              border: `1px solid ${accentColor}${isShmackAgent ? "50" : "35"}`,
+              borderRadius: 4,
+              padding: isShmackAgent ? "5px 18px" : "4px 14px",
+              boxShadow: isShmackAgent
+                ? `0 2px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(124,77,255,0.1), 0 0 12px ${accentColor}15`
+                : `0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)`,
+            }}>
+              <div style={{
+                fontSize: isShmackAgent ? 13 : 11,
+                fontWeight: isShmackAgent ? 800 : 700,
+                color: "#ffffff",
+                textAlign: "center",
+                lineHeight: 1.2,
+                whiteSpace: "nowrap",
+                fontFamily: "'Courier New', monospace",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                letterSpacing: isShmackAgent ? "0.08em" : "0.05em",
+                textShadow: `0 0 8px ${accentColor}${isShmackAgent ? "60" : "40"}`,
+              }}>
+                {isShmackAgent && <span style={{ fontSize: 12 }} title="Main Agent">👑</span>}
+                {agent.name}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Layer 4: Hands/props on desk (z:4) — only when agent is seated */}
+        {!isWorking && (
+          <div style={{
+            position: "absolute",
+            bottom: 56,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 4,
+            width: 80,
+            display: "flex",
+            justifyContent: agentPose === "mouse" ? "flex-end" : agentPose === "thinking" ? "flex-start" : "center",
+          }}>
+            {/* Hands on desk — positioned based on pose */}
+            {agentPose === "mouse" && (
+              <div style={{
+                width: 10,
+                height: 8,
+                borderRadius: "50%",
+                background: isShmackAgent ? FACTORY_VARS.skinShmack : FACTORY_VARS.skinDefault,
+                border: `1px solid ${isShmackAgent ? "#e8c0a0" : "#c4956a"}`,
+                marginRight: 6,
+              }} />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ─── META: Model + Status (z:5) ─── */}
       <div style={{
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 0,
-        minHeight: "70px",
-        justifyContent: "flex-end",
-        position: "relative",
+        gap: 6,
+        marginTop: 10,
+        zIndex: 5,
       }}>
-        {/* Person in chair OR empty chair */}
-        {isWorking ? (
-          /* Empty office chair — agent is away */
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 2 }}>
-            {/* Chair back */}
-            <div style={{
-              width: 30, height: 20,
-              background: "linear-gradient(180deg, #6a6078 0%, #5a5068 100%)",
-              borderRadius: "8px 8px 2px 2px",
-              border: "1.5px solid #8a7a98",
-              borderBottom: "none",
-            }} />
-            {/* Chair seat */}
-            <div style={{
-              width: 36, height: 8,
-              background: "linear-gradient(180deg, #7a6a88 0%, #6a5a78 100%)",
-              borderRadius: "2px",
-              border: "1.5px solid #8a7a98",
-            }} />
-            {/* Chair post */}
-            <div style={{ width: 6, height: 8, background: "#6a6078", marginTop: -1 }} />
-            {/* Chair base */}
-            <div style={{
-              width: 30, height: 4,
-              background: "#6a6078",
-              borderRadius: "2px",
-              border: "1px solid #7a6a88",
-            }} />
-            {/* Wheels */}
-            <div style={{ display: "flex", gap: 16, marginTop: 1 }}>
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#5a5068", border: "1px solid #7a6a88" }} />
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#5a5068", border: "1px solid #7a6a88" }} />
-            </div>
-          </div>
-        ) : (
-          /* Person sitting in chair */
-          <div style={{ position: "relative", marginBottom: 2 }}>
-            {/* The character */}
-            <div style={{ position: "relative", zIndex: 2 }}>
-              <PersonFigure
-                emoji={agent.emoji}
-                role={agent.role}
-                status={agent.status}
-                sitting={true}
-                agentId={agent.id}
-                agentName={agent.name}
-              />
-            </div>
-            {/* Chair visible behind/under person */}
-            <div style={{
-              position: "absolute",
-              bottom: -6,
-              left: "50%",
-              transform: "translateX(-50%)",
-              zIndex: 1,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}>
-              {/* Chair seat */}
-              <div style={{ width: 34, height: 6, background: "#6a6078", borderRadius: 2, border: "1px solid #7a6a88" }} />
-              {/* Chair post */}
-              <div style={{ width: 5, height: 6, background: "#5a5068" }} />
-              {/* Chair base + wheels */}
-              <div style={{ width: 28, height: 3, background: "#5a5068", borderRadius: 1 }} />
-              <div style={{ display: "flex", gap: 14, marginTop: 1 }}>
-                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4a4058", border: "1px solid #6a5a78" }} />
-                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4a4058", border: "1px solid #6a5a78" }} />
-              </div>
-            </div>
-          </div>
+        {/* Model badge */}
+        {modelStr && (
+          <span style={{
+            fontSize: 10,
+            color: modelColor,
+            background: modelColor + "15",
+            border: `1px solid ${modelColor}35`,
+            padding: "3px 10px",
+            borderRadius: 8,
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+          }}>
+            {modelStr}
+          </span>
         )}
 
-        {/* Desk surface with monitor */}
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4, width: "100%" }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div style={{
-              width: 22, height: 16,
-              background: isWorking ? "#1a1a2e" : "#1a2a3a",
-              border: `1.5px solid ${isWorking ? "#444" : accentColor}50`,
-              borderRadius: "3px 3px 0 0",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              {!isWorking && (
-                <div style={{ width: 10, height: 2, background: accentColor, borderRadius: 1, opacity: 0.6 }} />
-              )}
-            </div>
-            <div style={{ width: 4, height: 4, background: "#555" }} />
-            <div style={{ width: 12, height: 2, background: "#555", borderRadius: 1 }} />
-          </div>
-        </div>
-      </div>
-
-      {/* Nameplate */}
-      <div style={{
-        background: "#2a2a3a",
-        border: `1px solid ${accentColor}40`,
-        borderRadius: "2px",
-        padding: "2px 8px",
-        marginTop: "2px",
-      }}>
+        {/* Status */}
         <div style={{
-          fontSize: "9px",
-          fontWeight: 700,
-          color: "#ffffff",
+          fontSize: 11,
+          color: statusColor,
+          fontWeight: 600,
           textAlign: "center",
-          lineHeight: 1.2,
-          whiteSpace: "nowrap",
-          fontFamily: "'Courier New', monospace",
-          display: "flex",
-          alignItems: "center",
-          gap: "3px",
+          lineHeight: 1.3,
+          maxWidth: 200,
         }}>
-          {isShmack(agent) && <span style={{ fontSize: "8px" }} title="Main Agent">👑</span>}
-          {agent.name}
+          {statusText}
         </div>
-      </div>
-
-      {/* Model badge */}
-      {modelStr && (
-        <span style={{
-          fontSize: "7px",
-          color: modelColor,
-          background: modelColor + "18",
-          border: `1px solid ${modelColor}40`,
-          padding: "1px 4px",
-          borderRadius: "4px",
-          fontWeight: 700,
-        }}>
-          {modelStr}
-        </span>
-      )}
-
-      {/* Status */}
-      <div style={{
-        fontSize: "8px",
-        color: statusColor,
-        fontWeight: 600,
-        textAlign: "center",
-        lineHeight: 1.2,
-        maxWidth: "90px",
-      }}>
-        {statusText}
       </div>
     </div>
   );
@@ -560,7 +1013,9 @@ function WorkstationFigure({
 }) {
   const figureRef = useRef<HTMLDivElement>(null);
   const isActive = agent.status === "active";
+  const isSub = agent.role === "Sub-Agent";
   const colors = getAgentColor(agent.role);
+  const accentColor = isSub ? FACTORY_VARS.accentSubAgent : agent.role === "Dedicated Agent" ? FACTORY_VARS.accentDedicated : FACTORY_VARS.accentPrimary;
   const modelColor = agent.model?.includes("opus")
     ? "#f0b429"
     : agent.model?.includes("haiku")
@@ -594,59 +1049,71 @@ function WorkstationFigure({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: "4px",
-        padding: "10px 12px 8px",
-        minWidth: "100px",
-        maxWidth: "140px",
-        background: `linear-gradient(135deg, ${colors.bg} 0%, #151520 100%)`,
-        border: `1px solid ${colors.shirt}${isActive ? "60" : "40"}`,
-        borderTop: `2px solid ${colors.shirt}`,
-        borderRadius: "6px",
+        gap: 6,
+        padding: "14px 16px 12px",
+        minWidth: 130,
+        maxWidth: 180,
+        background: `linear-gradient(145deg, ${FACTORY_VARS.cardInterior} 0%, ${FACTORY_VARS.cardInterior2} 100%)`,
+        border: `1.5px solid ${accentColor}${isActive ? "60" : "40"}`,
+        borderRadius: 16,
         cursor: "pointer",
         position: "relative",
         animation: isActive ? "liveAgentGlow 2s ease-in-out infinite" : "none",
         opacity: agent.status === "completed" || agent.status === "failed" ? 0.65 : 1,
         transition: "opacity 0.5s ease",
+        boxShadow: isActive ? `0 0 20px ${accentColor}20` : "none",
+        overflow: "hidden",
       }}
     >
+      {/* Top glow line */}
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: "15%",
+        right: "15%",
+        height: 2,
+        background: `linear-gradient(90deg, transparent, ${accentColor}50, transparent)`,
+      }} />
+
       {/* LIVE badge */}
       {isActive && (
         <div style={{
           position: "absolute",
-          top: "-6px",
-          right: "-6px",
+          top: -6,
+          right: -6,
           background: "#f05b5b",
           color: "#ffffff",
-          fontSize: "8px",
+          fontSize: 8,
           fontWeight: 800,
-          padding: "2px 5px",
-          borderRadius: "3px",
+          padding: "2px 6px",
+          borderRadius: 4,
           letterSpacing: "0.1em",
           animation: "scannerPulse 1.5s ease-in-out infinite",
+          boxShadow: "0 0 8px #f05b5b60",
         }}>
           LIVE
         </div>
       )}
 
-      {/* Completed check */}
+      {/* Completed/Failed check */}
       {(agent.status === "completed" || agent.status === "failed") && (
         <div style={{
           position: "absolute",
-          top: "-6px",
-          right: "-6px",
+          top: -6,
+          right: -6,
           background: agent.status === "completed" ? "#26c97a" : "#f05b5b",
           color: "#ffffff",
-          fontSize: "10px",
+          fontSize: 10,
           fontWeight: 800,
-          padding: "1px 4px",
-          borderRadius: "3px",
+          padding: "1px 5px",
+          borderRadius: 4,
         }}>
           {agent.status === "completed" ? "✓" : "✕"}
         </div>
       )}
 
-      {/* Person figure standing at workbench */}
-      <div style={{ display: "flex", alignItems: "flex-end", gap: "6px" }}>
+      {/* Person figure with workbench scene */}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 8, position: "relative" }}>
         <PersonFigure
           emoji={agent.emoji}
           role={agent.role}
@@ -655,109 +1122,118 @@ function WorkstationFigure({
           agentId={agent.id}
           agentName={agent.name}
         />
-        {/* Workbench */}
+        {/* Mini workbench */}
         {isActive && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", opacity: 0.6 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", opacity: 0.7 }}>
             <div style={{
-              width: 16, height: 20,
-              background: "#2a2a3a",
-              border: `1px solid ${colors.shirt}40`,
-              borderRadius: "2px",
+              width: 20, height: 24,
+              background: FACTORY_VARS.desk,
+              border: `1px solid ${accentColor}30`,
+              borderRadius: 3,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              boxShadow: `0 0 8px ${accentColor}10`,
             }}>
-              <div style={{ width: 8, height: 8, background: colors.shirt, borderRadius: 1, opacity: 0.5, animation: "scannerPulse 2s ease-in-out infinite" }} />
+              <div style={{
+                width: 10, height: 10,
+                background: accentColor,
+                borderRadius: 2,
+                opacity: 0.4,
+                animation: "scannerPulse 2s ease-in-out infinite",
+              }} />
             </div>
-            <div style={{ width: 20, height: 3, background: "#3a3a4a", borderRadius: 1 }} />
+            <div style={{ width: 24, height: 3, background: FACTORY_VARS.desk2, borderRadius: 1 }} />
           </div>
         )}
       </div>
 
       {/* Name */}
       <div style={{
-        fontSize: "11px",
+        fontSize: 12,
         fontWeight: 700,
         color: "#ffffff",
         textAlign: "center",
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
-        maxWidth: "120px",
+        maxWidth: 150,
+        fontFamily: "'Courier New', monospace",
+        letterSpacing: "0.03em",
       }} title={agent.name}>
         {agent.name}
       </div>
 
-      {/* Badges */}
+      {/* Role badges */}
       {agent.role === "Sub-Agent" && (
         <span style={{
-          fontSize: "8px",
+          fontSize: 8,
           fontWeight: 700,
-          color: "#f0b429",
-          background: "#f0b42918",
-          border: "1px solid #f0b42940",
-          padding: "1px 6px",
-          borderRadius: "3px",
+          color: FACTORY_VARS.accentSubAgent,
+          background: FACTORY_VARS.accentSubAgent + "15",
+          border: `1px solid ${FACTORY_VARS.accentSubAgent}35`,
+          padding: "2px 8px",
+          borderRadius: 6,
           letterSpacing: "0.08em",
-        }} title="Spawned for a specific task. Disappears after completion.">
+        }} title="Spawned for a specific task">
           SUB-AGENT
         </span>
       )}
       {agent.role === "Dedicated Agent" && (
         <span style={{
-          fontSize: "8px",
+          fontSize: 8,
           fontWeight: 700,
-          color: "#4d7cfe",
-          background: "#4d7cfe18",
-          border: "1px solid #4d7cfe40",
-          padding: "1px 6px",
-          borderRadius: "3px",
+          color: FACTORY_VARS.accentDedicated,
+          background: FACTORY_VARS.accentDedicated + "15",
+          border: `1px solid ${FACTORY_VARS.accentDedicated}35`,
+          padding: "2px 8px",
+          borderRadius: 6,
           letterSpacing: "0.08em",
-        }} title="Always-on agent with a single purpose.">
+        }} title="Always-on agent">
           DEDICATED
         </span>
       )}
 
-      {/* Task clipboard */}
+      {/* Task summary */}
       {agent.taskSummary && (
         <div style={{
-          fontSize: "9px",
+          fontSize: 9,
           color: "#ffffff",
           opacity: 0.7,
           textAlign: "center",
           lineHeight: 1.3,
-          maxWidth: "120px",
+          maxWidth: 150,
           overflow: "hidden",
           textOverflow: "ellipsis",
           display: "-webkit-box",
           WebkitLineClamp: 2,
           WebkitBoxOrient: "vertical",
-          background: "#1a1a2e80",
+          background: `${FACTORY_VARS.desk}80`,
           border: "1px solid #ffffff10",
-          borderRadius: "3px",
-          padding: "3px 6px",
+          borderRadius: 4,
+          padding: "4px 8px",
         }} title={agent.taskSummary}>
           📋 {agent.taskSummary.length > 55 ? agent.taskSummary.slice(0, 52) + "..." : agent.taskSummary}
         </div>
       )}
 
-      {/* Model + time */}
-      <div style={{ display: "flex", gap: "4px", alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+      {/* Model + elapsed */}
+      <div style={{ display: "flex", gap: 5, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
         {agent.model && (
           <span style={{
-            fontSize: "9px",
+            fontSize: 9,
             color: modelColor,
-            padding: "1px 6px",
-            background: modelColor + "18",
-            border: `1px solid ${modelColor}40`,
-            borderRadius: "8px",
+            padding: "2px 8px",
+            background: modelColor + "15",
+            border: `1px solid ${modelColor}35`,
+            borderRadius: 8,
             fontWeight: 700,
           }}>
             {agent.model}
           </span>
         )}
         <span style={{
-          fontSize: "9px",
+          fontSize: 9,
           color: isActive ? "#4d7cfe" : "#26c97a",
           fontWeight: 600,
         }}>
