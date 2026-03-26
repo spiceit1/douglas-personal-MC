@@ -1311,7 +1311,7 @@ export default function AgentFactoryPage() {
               </span>
               {allDedicated.map((agent) => {
                 const statusColor = agent.status === "active" ? "#26c97a" : agent.status === "idle" ? "#9898a0" : agent.status === "scheduled" ? "#f0b429" : "#ffffff";
-                const statusText = agent.status === "active" ? "● RUNNING" : agent.status === "idle" ? "○ IDLE" : agent.status === "scheduled" ? "⏰ SCHEDULED" : "💤 STANDBY";
+                const statusText = agent.status === "active" ? "● RUNNING" : agent.status === "idle" ? (agent.taskSummary || "○ IDLE") : agent.status === "scheduled" ? "⏰ SCHEDULED" : "💤 STANDBY";
                 const statusOpacity = agent.status === "active" ? 1 : agent.status === "scheduled" ? 1 : 0.6;
                 const modelStr = agent.model || "";
                 const modelColor = modelStr.includes("opus") ? "#f0b429" : modelStr.includes("haiku") ? "#26c97a" : "#7c5cfc";
