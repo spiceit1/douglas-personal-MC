@@ -1985,10 +1985,11 @@ export default function AgentFactoryPage() {
     status: string;
     taskSummary?: string;
     source: "factory" | "team";
+    characterConfig?: { skinColor?: string; hairStyle?: string; hairColor?: string; premium?: boolean; mugText?: string };
   };
 
   const allDedicated: DeskAgent[] = [
-    ...dedicatedFromFactory.map(a => ({ id: a.id, name: a.name, emoji: a.emoji, role: a.role, model: a.model, status: a.status, taskSummary: a.taskSummary, source: "factory" as const })),
+    ...dedicatedFromFactory.map(a => ({ id: a.id, name: a.name, emoji: a.emoji, role: a.role, model: a.model, status: a.status, taskSummary: a.taskSummary, characterConfig: a.characterConfig, source: "factory" as const })),
     ...standbyFromTeam.map(a => ({
       id: a.id, name: a.name, emoji: a.emoji, role: a.role,
       model: a.model, status: a.status, taskSummary: a.statusText || "",
@@ -1998,7 +1999,7 @@ export default function AgentFactoryPage() {
 
   // Build desk agents list (primary + dedicated that have desks)
   const deskAgents: DeskAgent[] = [
-    ...primaryAgents.map(a => ({ id: a.id, name: a.name, emoji: a.emoji, role: a.role, model: a.model, status: a.status, taskSummary: a.taskSummary, source: "factory" as const })),
+    ...primaryAgents.map(a => ({ id: a.id, name: a.name, emoji: a.emoji, role: a.role, model: a.model, status: a.status, taskSummary: a.taskSummary, characterConfig: a.characterConfig, source: "factory" as const })),
     ...allDedicated,
   ];
 
@@ -2166,6 +2167,7 @@ export default function AgentFactoryPage() {
                             model: a.model,
                             status: a.status,
                             taskSummary: a.taskSummary,
+                            characterConfig: a.characterConfig,
                           }}
                           isWorking={isWorking}
                           onClick={() => setSelectedAgent(a)}
