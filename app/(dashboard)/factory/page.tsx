@@ -2557,7 +2557,7 @@ export default function AgentFactoryPage() {
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ id: selectedAgent.id, character_config: { ...selectedAgent.characterConfig, skinColor: e.target.value } }),
                         });
-                        if (res.ok) fetchData();
+                        if (res.ok) { const d = await fetch('/api/factory').then(r=>r.json()); setData(d); const updated = (d.liveAgents||[]).find((a:any)=>a.id===selectedAgent.id); if(updated) setSelectedAgent(updated); }
                       }}
                       style={{ width: "100%", height: "28px", border: "1px solid var(--border-subtle)", borderRadius: "4px", background: "var(--bg-secondary)", cursor: "pointer" }}
                     />
@@ -2573,7 +2573,7 @@ export default function AgentFactoryPage() {
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ id: selectedAgent.id, character_config: { ...selectedAgent.characterConfig, hairColor: e.target.value } }),
                         });
-                        if (res.ok) fetchData();
+                        if (res.ok) { const d = await fetch('/api/factory').then(r=>r.json()); setData(d); const updated = (d.liveAgents||[]).find((a:any)=>a.id===selectedAgent.id); if(updated) setSelectedAgent(updated); }
                       }}
                       style={{ width: "100%", height: "28px", border: "1px solid var(--border-subtle)", borderRadius: "4px", background: "var(--bg-secondary)", cursor: "pointer" }}
                     />
@@ -2588,7 +2588,7 @@ export default function AgentFactoryPage() {
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ id: selectedAgent.id, character_config: { ...selectedAgent.characterConfig, hairStyle: e.target.value } }),
                         });
-                        if (res.ok) fetchData();
+                        if (res.ok) { const d = await fetch('/api/factory').then(r=>r.json()); setData(d); const updated = (d.liveAgents||[]).find((a:any)=>a.id===selectedAgent.id); if(updated) setSelectedAgent(updated); }
                       }}
                       style={{ width: "100%", height: "28px", border: "1px solid var(--border-subtle)", borderRadius: "4px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: "12px", cursor: "pointer" }}
                     >
@@ -2609,7 +2609,7 @@ export default function AgentFactoryPage() {
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ id: selectedAgent.id, character_config: { ...selectedAgent.characterConfig, premium: newVal } }),
                         });
-                        if (res.ok) fetchData();
+                        if (res.ok) { const d = await fetch('/api/factory').then(r=>r.json()); setData(d); const updated = (d.liveAgents||[]).find((a:any)=>a.id===selectedAgent.id); if(updated) setSelectedAgent(updated); }
                       }}
                       style={{
                         width: "100%", height: "28px", border: "1px solid var(--border-subtle)", borderRadius: "4px",
