@@ -391,94 +391,106 @@ function AgentDesk({
         position: "relative",
       }}
     >
-      {/* Desk area: person + monitor */}
+      {/* Desk scene */}
       <div style={{
         display: "flex",
-        alignItems: "flex-end",
-        gap: "6px",
-        minHeight: "52px",
-        justifyContent: "center",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 0,
+        minHeight: "70px",
+        justifyContent: "flex-end",
+        position: "relative",
       }}>
         {/* Person in chair OR empty chair */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
-          {isWorking ? (
-            /* Empty chair — agent walked away */
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", opacity: 0.4 }}>
-              {/* Chair back */}
-              <div style={{
-                width: 22, height: 14,
-                background: "#3a3040",
-                borderRadius: "4px 4px 0 0",
-                border: "1px solid #a090a8",
-                borderBottom: "none",
-              }} />
-              {/* Chair seat */}
-              <div style={{
-                width: 26, height: 6,
-                background: "#8a7a90",
-                borderRadius: "1px",
-                border: "1px solid #a090a8",
-              }} />
-              {/* Chair legs */}
-              <div style={{ display: "flex", gap: 10, marginTop: 1 }}>
-                <div style={{ width: 3, height: 8, background: "#a090a8", borderRadius: 1 }} />
-                <div style={{ width: 3, height: 8, background: "#a090a8", borderRadius: 1 }} />
-              </div>
+        {isWorking ? (
+          /* Empty office chair — agent is away */
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 2 }}>
+            {/* Chair back */}
+            <div style={{
+              width: 30, height: 20,
+              background: "linear-gradient(180deg, #6a6078 0%, #5a5068 100%)",
+              borderRadius: "8px 8px 2px 2px",
+              border: "1.5px solid #8a7a98",
+              borderBottom: "none",
+            }} />
+            {/* Chair seat */}
+            <div style={{
+              width: 36, height: 8,
+              background: "linear-gradient(180deg, #7a6a88 0%, #6a5a78 100%)",
+              borderRadius: "2px",
+              border: "1.5px solid #8a7a98",
+            }} />
+            {/* Chair post */}
+            <div style={{ width: 6, height: 8, background: "#6a6078", marginTop: -1 }} />
+            {/* Chair base */}
+            <div style={{
+              width: 30, height: 4,
+              background: "#6a6078",
+              borderRadius: "2px",
+              border: "1px solid #7a6a88",
+            }} />
+            {/* Wheels */}
+            <div style={{ display: "flex", gap: 16, marginTop: 1 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#5a5068", border: "1px solid #7a6a88" }} />
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#5a5068", border: "1px solid #7a6a88" }} />
             </div>
-          ) : (
-            /* Person sitting */
-            <div style={{ position: "relative" }}>
-              <div style={{ position: "relative", zIndex: 2 }}>
-                <PersonFigure
-                  emoji={agent.emoji}
-                  role={agent.role}
-                  status={agent.status}
-                  sitting={true}
-                  agentId={agent.id}
-                  agentName={agent.name}
-                />
-              </div>
-              {/* Chair under the person */}
-              <div style={{
-                position: "absolute",
-                bottom: -4,
-                left: "50%",
-                transform: "translateX(-50%)",
-                zIndex: 1,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                opacity: 0.5,
-              }}>
-                <div style={{ width: 26, height: 5, background: "#8a7a90", borderRadius: 1, border: "1px solid #a090a8" }} />
-                <div style={{ display: "flex", gap: 10, marginTop: 1 }}>
-                  <div style={{ width: 3, height: 6, background: "#a090a8", borderRadius: 1 }} />
-                  <div style={{ width: 3, height: 6, background: "#a090a8", borderRadius: 1 }} />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Monitor/desk icon */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", opacity: 0.6 }}>
-          {/* Monitor screen */}
-          <div style={{
-            width: 18, height: 14,
-            background: isWorking ? "#1a1a2e" : "#1a2a3a",
-            border: `1px solid ${isWorking ? "#333" : accentColor}60`,
-            borderRadius: "2px 2px 0 0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}>
-            {!isWorking && (
-              <div style={{ width: 10, height: 2, background: accentColor, borderRadius: 1, opacity: 0.6 }} />
-            )}
           </div>
-          {/* Monitor stand */}
-          <div style={{ width: 4, height: 4, background: "#555" }} />
-          <div style={{ width: 12, height: 2, background: "#555", borderRadius: 1 }} />
+        ) : (
+          /* Person sitting in chair */
+          <div style={{ position: "relative", marginBottom: 2 }}>
+            {/* The character */}
+            <div style={{ position: "relative", zIndex: 2 }}>
+              <PersonFigure
+                emoji={agent.emoji}
+                role={agent.role}
+                status={agent.status}
+                sitting={true}
+                agentId={agent.id}
+                agentName={agent.name}
+              />
+            </div>
+            {/* Chair visible behind/under person */}
+            <div style={{
+              position: "absolute",
+              bottom: -6,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}>
+              {/* Chair seat */}
+              <div style={{ width: 34, height: 6, background: "#6a6078", borderRadius: 2, border: "1px solid #7a6a88" }} />
+              {/* Chair post */}
+              <div style={{ width: 5, height: 6, background: "#5a5068" }} />
+              {/* Chair base + wheels */}
+              <div style={{ width: 28, height: 3, background: "#5a5068", borderRadius: 1 }} />
+              <div style={{ display: "flex", gap: 14, marginTop: 1 }}>
+                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4a4058", border: "1px solid #6a5a78" }} />
+                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4a4058", border: "1px solid #6a5a78" }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Desk surface with monitor */}
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4, width: "100%" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{
+              width: 22, height: 16,
+              background: isWorking ? "#1a1a2e" : "#1a2a3a",
+              border: `1.5px solid ${isWorking ? "#444" : accentColor}50`,
+              borderRadius: "3px 3px 0 0",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              {!isWorking && (
+                <div style={{ width: 10, height: 2, background: accentColor, borderRadius: 1, opacity: 0.6 }} />
+              )}
+            </div>
+            <div style={{ width: 4, height: 4, background: "#555" }} />
+            <div style={{ width: 12, height: 2, background: "#555", borderRadius: 1 }} />
+          </div>
         </div>
       </div>
 
