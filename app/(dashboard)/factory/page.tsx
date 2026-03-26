@@ -1280,7 +1280,8 @@ export default function AgentFactoryPage() {
 
         {/* ── Dedicated agents roster (includes standby/scheduled from team + dedicated from factory) ── */}
         {(() => {
-          const dedicatedFromFactory = liveAgents.filter(a => a.role === "Dedicated Agent");
+          // Only show dedicated agents that are NOT currently running (running ones show in In Progress zone)
+          const dedicatedFromFactory = liveAgents.filter(a => a.role === "Dedicated Agent" && a.status !== "active");
           const standbyFromTeam = agents.filter(a => a.status === "standby" || a.status === "scheduled");
           const allDedicated = [
             ...dedicatedFromFactory.map(a => ({ ...a, source: "factory" as const })),
