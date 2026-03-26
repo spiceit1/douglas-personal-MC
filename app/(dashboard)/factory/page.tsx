@@ -640,8 +640,8 @@ function AgentDesk({
   const showMug = isShmackAgent;
 
   // Shmack gets a bigger card — he's the boss
-  const cardWidth = isShmackAgent ? 290 : 260;
-  const cardMinHeight = isShmackAgent ? 340 : 300;
+  const cardWidth = isShmackAgent ? 250 : 200;
+  const cardMinHeight = isShmackAgent ? 280 : 240;
   const deskWidth = isShmackAgent ? 250 : 220;
 
   return (
