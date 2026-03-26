@@ -642,7 +642,7 @@ function AgentDesk({
 }) {
   const primary = isPrimaryAgent(agent.role, agent.status);
   const isSub = agent.role === "Sub-Agent";
-  const isPremium = agent.characterConfig?.premium || isShmack(agent);
+  const isPremium = agent.characterConfig?.premium ?? primary;
   const colors = getAgentColor(agent.role, agent.status);
   const modelStr = agent.model || "";
   const modelColor = modelStr.includes("opus") ? "#f0b429" : modelStr.includes("haiku") ? "#26c97a" : "#7c5cfc";
