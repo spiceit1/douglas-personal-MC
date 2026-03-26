@@ -661,7 +661,7 @@ function AgentDesk({
         borderRadius: 20,
         cursor: onClick && !isWorking ? "pointer" : "default",
         position: "relative",
-        overflow: "hidden",
+        overflow: "visible",
         boxShadow: isShmackAgent
           ? `0 0 30px ${accentColor}30, 0 0 80px ${accentColor}10, inset 0 1px 0 ${accentColor}20, 0 4px 24px rgba(0,0,0,0.4)`
           : `0 0 20px ${accentColor}20, 0 0 60px ${accentColor}08, inset 0 1px 0 ${accentColor}15`,
@@ -1062,7 +1062,7 @@ function WorkstationFigure({
         opacity: agent.status === "completed" || agent.status === "failed" ? 0.65 : 1,
         transition: "opacity 0.5s ease",
         boxShadow: isActive ? `0 0 20px ${accentColor}20` : "none",
-        overflow: "hidden",
+        overflow: "visible",
       }}
     >
       {/* Top glow line */}
