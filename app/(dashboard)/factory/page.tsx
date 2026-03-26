@@ -691,7 +691,7 @@ function AgentDesk({
       <div style={{
         position: "relative",
         width: "100%",
-        height: isShmackAgent ? 250 : 220,
+        height: isShmackAgent ? 170 : 150,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
