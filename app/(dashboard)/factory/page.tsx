@@ -401,28 +401,48 @@ function PersonFigure({
         animation: bouncing ? "agentBounce 1s ease-in-out infinite" : "none",
       }}
     >
-      {/* Hair — uses characterConfig.hairStyle if available, falls back to Shmack detection */}
-      {(characterConfig?.hairStyle === "redspiky" || (!characterConfig?.hairStyle && isShmackAgent)) ? (
-        <div style={{ display: "flex", gap: isSmall ? 1 : 0, marginBottom: isSmall ? -8 : -10, zIndex: 5, position: "relative" }}>
-          <div style={{ width: isSmall ? 5 : 6, height: isSmall ? 7 : 14, background: "#b03820", borderRadius: "50% 50% 20% 20%", transform: "rotate(-30deg)", marginRight: -1 }} />
-          <div style={{ width: isSmall ? 4 : 7, height: isSmall ? 9 : 18, background: "#c0442a", borderRadius: "50% 50% 20% 20%", transform: "rotate(-12deg)" }} />
-          <div style={{ width: isSmall ? 5 : 8, height: isSmall ? 10 : 20, background: "#d45535", borderRadius: "50% 50% 15% 15%", transform: "rotate(-3deg)" }} />
-          <div style={{ width: isSmall ? 5 : 9, height: isSmall ? 11 : 22, background: "#e06040", borderRadius: "50% 50% 15% 15%" }} />
-          <div style={{ width: isSmall ? 5 : 8, height: isSmall ? 10 : 20, background: "#d45535", borderRadius: "50% 50% 15% 15%", transform: "rotate(3deg)" }} />
-          <div style={{ width: isSmall ? 4 : 7, height: isSmall ? 9 : 18, background: "#c0442a", borderRadius: "50% 50% 20% 20%", transform: "rotate(12deg)" }} />
-          <div style={{ width: isSmall ? 5 : 6, height: isSmall ? 7 : 14, background: "#b03820", borderRadius: "50% 50% 20% 20%", transform: "rotate(30deg)", marginLeft: -1 }} />
-        </div>
-      ) : (
-        <div style={{
-          width: headSize * 0.9,
-          height: isSmall ? 6 : 10,
-          background: "#3a2a1a",
-          borderRadius: `${isSmall ? 5 : 8}px ${isSmall ? 5 : 8}px 1px 1px`,
-          marginBottom: isSmall ? -5 : -8,
-          zIndex: 5,
-          position: "relative",
-        }} />
-      )}
+      {/* Hair — driven by characterConfig */}
+      {(() => {
+        const hs = characterConfig?.hairStyle || (isShmackAgent ? "redspiky" : "short");
+        const hc = characterConfig?.hairColor || (isShmackAgent ? "#c0442a" : "#3a2a1a");
+        if (hs === "none") return null;
+        if (hs === "redspiky") return (
+          <div style={{ display: "flex", gap: isSmall ? 1 : 0, marginBottom: isSmall ? -8 : -10, zIndex: 5, position: "relative" }}>
+            <div style={{ width: isSmall ? 5 : 6, height: isSmall ? 7 : 14, background: hc, borderRadius: "50% 50% 20% 20%", transform: "rotate(-30deg)", marginRight: -1, opacity: 0.8 }} />
+            <div style={{ width: isSmall ? 4 : 7, height: isSmall ? 9 : 18, background: hc, borderRadius: "50% 50% 20% 20%", transform: "rotate(-12deg)" }} />
+            <div style={{ width: isSmall ? 5 : 8, height: isSmall ? 10 : 20, background: hc, borderRadius: "50% 50% 15% 15%", transform: "rotate(-3deg)", filter: "brightness(1.15)" }} />
+            <div style={{ width: isSmall ? 5 : 9, height: isSmall ? 11 : 22, background: hc, borderRadius: "50% 50% 15% 15%", filter: "brightness(1.25)" }} />
+            <div style={{ width: isSmall ? 5 : 8, height: isSmall ? 10 : 20, background: hc, borderRadius: "50% 50% 15% 15%", transform: "rotate(3deg)", filter: "brightness(1.15)" }} />
+            <div style={{ width: isSmall ? 4 : 7, height: isSmall ? 9 : 18, background: hc, borderRadius: "50% 50% 20% 20%", transform: "rotate(12deg)" }} />
+            <div style={{ width: isSmall ? 5 : 6, height: isSmall ? 7 : 14, background: hc, borderRadius: "50% 50% 20% 20%", transform: "rotate(30deg)", marginLeft: -1, opacity: 0.8 }} />
+          </div>
+        );
+        if (hs === "long") return (
+          <div style={{ position: "relative", marginBottom: isSmall ? -8 : -10, zIndex: 5 }}>
+            <div style={{ width: headSize * 1.1, height: isSmall ? 10 : 16, background: hc, borderRadius: `${isSmall ? 6 : 10}px ${isSmall ? 6 : 10}px 0 0` }} />
+            <div style={{ position: "absolute", left: -2, top: isSmall ? 6 : 10, width: isSmall ? 5 : 7, height: isSmall ? 14 : 22, background: hc, borderRadius: "2px 0 4px 4px" }} />
+            <div style={{ position: "absolute", right: -2, top: isSmall ? 6 : 10, width: isSmall ? 5 : 7, height: isSmall ? 14 : 22, background: hc, borderRadius: "0 2px 4px 4px" }} />
+          </div>
+        );
+        if (hs === "bun") return (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: isSmall ? -8 : -10, zIndex: 5 }}>
+            <div style={{ width: isSmall ? 10 : 14, height: isSmall ? 10 : 14, borderRadius: "50%", background: hc, marginBottom: -4 }} />
+            <div style={{ width: headSize * 0.9, height: isSmall ? 6 : 10, background: hc, borderRadius: `${isSmall ? 5 : 8}px ${isSmall ? 5 : 8}px 1px 1px` }} />
+          </div>
+        );
+        // Default: short
+        return (
+          <div style={{
+            width: headSize * 0.9,
+            height: isSmall ? 6 : 10,
+            background: hc,
+            borderRadius: `${isSmall ? 5 : 8}px ${isSmall ? 5 : 8}px 1px 1px`,
+            marginBottom: isSmall ? -5 : -8,
+            zIndex: 5,
+            position: "relative",
+          }} />
+        );
+      })()}
 
       {/* Head */}
       <div style={{
