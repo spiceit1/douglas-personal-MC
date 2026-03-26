@@ -28,6 +28,7 @@ async function ensureTable() {
       auto_buy_max_cost NUMERIC DEFAULT 200,
       auto_buy_min_days_out INTEGER DEFAULT 7,
       auto_buy_max_days_out INTEGER DEFAULT 60,
+      max_auto_reprice_pct NUMERIC DEFAULT 30,
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
@@ -88,6 +89,7 @@ export async function PATCH(req: Request) {
         stubhub_seller_fee = COALESCE(${body.stubhub_seller_fee ?? null}, stubhub_seller_fee),
         vivid_seller_fee = COALESCE(${body.vivid_seller_fee ?? null}, vivid_seller_fee),
         seatgeek_seller_fee = COALESCE(${body.seatgeek_seller_fee ?? null}, seatgeek_seller_fee),
+        max_auto_reprice_pct = COALESCE(${body.max_auto_reprice_pct ?? null}, max_auto_reprice_pct),
         updated_at = NOW()
       WHERE id = 'default'
     `;

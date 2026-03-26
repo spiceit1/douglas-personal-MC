@@ -2492,6 +2492,26 @@ export default function FlipsPage() {
                 : <span style={{ color: "var(--text-muted)" }}> · Auto-list OFF (monitor still uses these rules)</span>
               }
             </div>
+
+            {/* Max Auto-Reprice Safety Threshold */}
+            <div style={{ marginTop: "16px" }}>
+              <div style={{ fontSize: "11px", color: "var(--text-tertiary)", marginBottom: "8px" }}>🛑 Max Auto-Reprice (% Change)</div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <input
+                  type="number"
+                  min={5}
+                  max={100}
+                  step={5}
+                  style={{ width: "70px", padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--border)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: "14px", textAlign: "center" }}
+                  defaultValue={Number(rules.max_auto_reprice_pct) || 30}
+                  onBlur={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v) && v >= 5 && v <= 100) updateRule("max_auto_reprice_pct", v); }}
+                />
+                <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>%</span>
+              </div>
+              <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                Price changes above this % require your approval. Prevents accidental catastrophic repricing.
+              </div>
+            </div>
           </div>
 
           {rules.updated_at && (
