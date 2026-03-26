@@ -3,29 +3,26 @@ import { getDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-// GET — Return all live agents (active + recently completed within 30 min)
+// GET — Return all agents from mc_factory_agents
 export async function GET() {
   try {
     const sql = getDb();
     const rows = await sql`
-      SELECT * FROM mc_live_agents
-      WHERE status = 'active'
-        OR (status = 'completed' AND completed_at > NOW() - interval '30 minutes')
-        OR (status = 'failed' AND completed_at > NOW() - interval '30 minutes')
-      ORDER BY started_at DESC
+      SELECT * FROM mc_factory_agents
+      ORDER BY updated_at DESC
     `;
     return NextResponse.json({ agents: rows });
   } catch (e) {
     console.error("GET /api/factory/agents error:", e);
-    return NextResponse.json({ error: "Failed to fetch live agents" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch agents" }, { status: 500 });
   }
 }
 
-// POST — Register a new live agent
+// POST — Register a new agent (sub-agents, primary, dedicated)
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, session_key, name, emoji, role, model, task_summary, task_id } = body;
+    const { id, session_key, name, emoji, role, model, task_summary } = body;
 
     if (!id || !name) {
       return NextResponse.json({ error: "id and name are required" }, { status: 400 });
@@ -33,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     const sql = getDb();
     await sql`
-      INSERT INTO mc_live_agents (id, session_key, name, emoji, role, model, task_summary, task_id, status, started_at, updated_at)
+      INSERT INTO mc_factory_agents (id, session_key, name, emoji, role, model, task_summary, status, updated_at)
       VALUES (
         ${id},
         ${session_key || null},
@@ -42,9 +39,7 @@ export async function POST(req: NextRequest) {
         ${role || 'Sub-Agent'},
         ${model || null},
         ${task_summary || null},
-        ${task_id || null},
         'active',
-        NOW(),
         NOW()
       )
       ON CONFLICT (id) DO UPDATE SET
@@ -53,9 +48,8 @@ export async function POST(req: NextRequest) {
         role = EXCLUDED.role,
         model = EXCLUDED.model,
         task_summary = EXCLUDED.task_summary,
-        task_id = EXCLUDED.task_id,
+        session_key = EXCLUDED.session_key,
         status = 'active',
-        started_at = EXCLUDED.started_at,
         updated_at = NOW()
     `;
 
