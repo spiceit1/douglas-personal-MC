@@ -386,7 +386,7 @@ function AgentDesk({
         borderRadius: "6px",
         minWidth: "85px",
         cursor: onClick && !isWorking ? "pointer" : "default",
-        opacity: isWorking ? 0.6 : 1,
+        opacity: 1,
         transition: "opacity 0.3s ease",
         position: "relative",
       }}
@@ -461,7 +461,7 @@ function AgentDesk({
         </div>
 
         {/* Monitor/desk icon */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", opacity: isWorking ? 0.3 : 0.6 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", opacity: 0.6 }}>
           {/* Monitor screen */}
           <div style={{
             width: 18, height: 14,
