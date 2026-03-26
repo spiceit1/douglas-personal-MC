@@ -409,20 +409,20 @@ function AgentDesk({
                 width: 22, height: 14,
                 background: "#3a3040",
                 borderRadius: "4px 4px 0 0",
-                border: "1px solid #5a5060",
+                border: "1px solid #a090a8",
                 borderBottom: "none",
               }} />
               {/* Chair seat */}
               <div style={{
                 width: 26, height: 6,
-                background: "#4a4050",
+                background: "#8a7a90",
                 borderRadius: "1px",
-                border: "1px solid #5a5060",
+                border: "1px solid #a090a8",
               }} />
               {/* Chair legs */}
               <div style={{ display: "flex", gap: 10, marginTop: 1 }}>
-                <div style={{ width: 3, height: 8, background: "#5a5060", borderRadius: 1 }} />
-                <div style={{ width: 3, height: 8, background: "#5a5060", borderRadius: 1 }} />
+                <div style={{ width: 3, height: 8, background: "#a090a8", borderRadius: 1 }} />
+                <div style={{ width: 3, height: 8, background: "#a090a8", borderRadius: 1 }} />
               </div>
             </div>
           ) : (
@@ -450,10 +450,10 @@ function AgentDesk({
                 alignItems: "center",
                 opacity: 0.5,
               }}>
-                <div style={{ width: 26, height: 5, background: "#4a4050", borderRadius: 1, border: "1px solid #5a5060" }} />
+                <div style={{ width: 26, height: 5, background: "#8a7a90", borderRadius: 1, border: "1px solid #a090a8" }} />
                 <div style={{ display: "flex", gap: 10, marginTop: 1 }}>
-                  <div style={{ width: 3, height: 6, background: "#5a5060", borderRadius: 1 }} />
-                  <div style={{ width: 3, height: 6, background: "#5a5060", borderRadius: 1 }} />
+                  <div style={{ width: 3, height: 6, background: "#a090a8", borderRadius: 1 }} />
+                  <div style={{ width: 3, height: 6, background: "#a090a8", borderRadius: 1 }} />
                 </div>
               </div>
             </div>
