@@ -489,16 +489,21 @@ function LiveAgentCard({ agent, onSelect }: { agent: LiveAgent; onSelect: (agent
         padding: "12px 10px",
         minWidth: "100px",
         maxWidth: "140px",
-        background: isActive
-          ? "linear-gradient(135deg, #0f1a2e 0%, #1a1040 100%)"
-          : isCompleted
-          ? "linear-gradient(135deg, #081a11 0%, #0f2a1a 100%)"
-          : "var(--bg-elevated)",
-        border: isActive
-          ? "1px solid #4d7cfe80"
-          : isCompleted
-          ? "1px solid #26c97a60"
-          : "1px solid #f05b5b60",
+        background: agent.role === "Dedicated Agent"
+          ? "linear-gradient(135deg, #0f1a2e 0%, #101525 100%)"
+          : agent.role === "Sub-Agent"
+          ? (isActive ? "linear-gradient(135deg, #0a1a10 0%, #102a18 100%)" : "linear-gradient(135deg, #081a11 0%, #0f2a1a 100%)")
+          : (isActive ? "linear-gradient(135deg, #1a1030 0%, #151525 100%)" : "var(--bg-elevated)"),
+        border: agent.role === "Dedicated Agent"
+          ? `1px solid #4d7cfe${isActive ? "80" : "60"}`
+          : agent.role === "Sub-Agent"
+          ? `1px solid #26c97a${isActive ? "80" : "60"}`
+          : `1px solid #7c5cfc${isActive ? "80" : "60"}`,
+        borderTop: agent.role === "Dedicated Agent"
+          ? "2px solid #4d7cfe"
+          : agent.role === "Sub-Agent"
+          ? "2px solid #26c97a"
+          : "2px solid #7c5cfc",
         borderRadius: "6px",
         position: "relative",
         animation: isActive ? "liveAgentGlow 2s ease-in-out infinite" : "none",
@@ -546,30 +551,28 @@ function LiveAgentCard({ agent, onSelect }: { agent: LiveAgent; onSelect: (agent
         </div>
       )}
 
+      {/* Person figure with emoji shirt */}
       <div
         style={{
-          width: "48px",
-          height: "48px",
-          background: isActive
-            ? "linear-gradient(135deg, #1e1a3a 0%, #2a1e5a 100%)"
-            : isCompleted
-            ? "linear-gradient(135deg, #0a2015 0%, #15402a 100%)"
-            : "var(--bg-elevated)",
-          border: `2px solid ${isActive ? "#4d7cfe" : isCompleted ? "#26c97a" : "#f05b5b"}`,
-          borderRadius: "4px",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
-          fontSize: "26px",
-          boxShadow: isActive
-            ? "0 0 16px rgba(77,124,254,0.5)"
-            : isCompleted
-            ? "0 0 8px rgba(38,201,122,0.3)"
-            : "none",
           animation: isActive ? "agentBounce 1s ease-in-out infinite" : "none",
         }}
       >
-        {agent.emoji}
+        {/* Head */}
+        <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#d4a574", border: "1px solid #c4956a", marginBottom: "-3px", zIndex: 2 }} />
+        {/* Body/shirt with emoji */}
+        <div style={{
+          width: "28px", height: "22px", borderRadius: "5px 5px 2px 2px",
+          background: agent.role === "Dedicated Agent" ? "#4d7cfe" : agent.role === "Sub-Agent" ? "#26c97a" : "#7c5cfc",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "12px", lineHeight: 1, zIndex: 2,
+          border: `1px solid ${agent.role === "Dedicated Agent" ? "#6d9cff" : agent.role === "Sub-Agent" ? "#46e99a" : "#9b7cff"}`,
+          boxShadow: isActive ? `0 0 12px ${agent.role === "Dedicated Agent" ? "rgba(77,124,254,0.5)" : agent.role === "Sub-Agent" ? "rgba(38,201,122,0.5)" : "rgba(124,92,252,0.5)"}` : "none",
+        }}>
+          {agent.emoji}
+        </div>
       </div>
 
       {isActive && (
@@ -1264,15 +1267,31 @@ export default function AgentFactoryPage() {
                   cursor: clickable && !isWorking ? "pointer" : "default",
                 }}
               >
-                {/* Agent in chair or empty chair */}
-                <div style={{ position: "relative", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {/* Person in chair or empty chair */}
+                <div style={{ position: "relative", width: "40px", height: "44px", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
                   {isWorking ? (
-                    <span style={{ fontSize: "28px", lineHeight: 1 }}>🪑</span>
+                    /* Empty chair — agent is out working */
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <span style={{ fontSize: "26px", lineHeight: 1 }}>🪑</span>
+                    </div>
                   ) : (
-                    <>
-                      <span style={{ fontSize: "22px", lineHeight: 1, position: "absolute", top: "-2px", zIndex: 1 }}>{agent.emoji}</span>
-                      <span style={{ fontSize: "26px", lineHeight: 1, position: "absolute", bottom: "-4px", opacity: 0.5 }}>🪑</span>
-                    </>
+                    /* Person sitting in chair with emoji shirt */
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
+                      {/* Head */}
+                      <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: "#d4a574", border: "1px solid #c4956a", marginBottom: "-2px", zIndex: 2 }} />
+                      {/* Body/shirt with emoji */}
+                      <div style={{
+                        width: "24px", height: "18px", borderRadius: "4px 4px 0 0",
+                        background: isPrimary ? "#7c5cfc" : isDedicated ? "#4d7cfe" : "#26c97a",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "10px", lineHeight: 1, zIndex: 2,
+                        border: `1px solid ${isPrimary ? "#9b7cff" : isDedicated ? "#6d9cff" : "#46e99a"}`,
+                      }}>
+                        {agent.emoji}
+                      </div>
+                      {/* Chair behind */}
+                      <span style={{ fontSize: "22px", lineHeight: 1, position: "absolute", bottom: "-6px", zIndex: 1, opacity: 0.6 }}>🪑</span>
+                    </div>
                   )}
                 </div>
                 {/* Name */}
