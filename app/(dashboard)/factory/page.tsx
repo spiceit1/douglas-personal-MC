@@ -361,7 +361,7 @@ function AgentDesk({
   const statusText = isWorking
     ? "→ In Progress"
     : agent.status === "idle"
-    ? "○ IDLE"
+    ? (agent.taskSummary || "○ IDLE")
     : agent.status === "scheduled"
     ? "⏰ SCHEDULED"
     : "💤 STANDBY";
@@ -1626,7 +1626,7 @@ export default function AgentFactoryPage() {
               background: "linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%)",
             }}
           >
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "flex-end" }}>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "stretch" }}>
               {/* Primary section */}
               {primaryAgents.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
