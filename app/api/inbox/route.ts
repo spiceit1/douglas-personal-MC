@@ -78,6 +78,19 @@ export async function POST(req: Request) {
       RETURNING *
     `;
 
+    // Fire webhook to recipient's instance (real-time notification) — fire and forget
+    try {
+      const webhookRows = await sql`SELECT value FROM mc_settings WHERE key = ${'webhook_' + to_agent} LIMIT 1`;
+      if (webhookRows.length > 0) {
+        const webhookUrl = webhookRows[0].value;
+        fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event: "new_message", from_agent, to_agent, subject, message_id: rows[0].id }),
+        }).catch(() => {}); // ignore errors — webhook is best-effort
+      }
+    } catch { /* ignore */ }
+
     return NextResponse.json({ message: rows[0] });
   } catch (e) {
     console.error("POST /api/inbox error:", e);
