@@ -1259,7 +1259,7 @@ export default function AgentFactoryPage() {
                   {isWorking ? "🪑" : agent.emoji}
                 </div>
                 {/* Name */}
-                <div style={{ fontSize: "11px", fontWeight: 700, color: isWorking ? "var(--text-tertiary)" : "#ffffff", textAlign: "center", lineHeight: 1.2 }}>
+                <div style={{ fontSize: "11px", fontWeight: 700, color: "#ffffff", textAlign: "center", lineHeight: 1.2 }}>
                   {agent.name}
                 </div>
                 {/* Model badge */}
