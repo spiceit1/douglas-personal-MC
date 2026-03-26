@@ -2644,6 +2644,27 @@ export default function AgentFactoryPage() {
                     </button>
                   </div>
                 </div>
+                {/* Mug text — only shows when premium is on */}
+                {selectedAgent.characterConfig?.premium && (
+                  <div style={{ marginTop: "8px" }}>
+                    <label style={{ fontSize: "10px", color: "var(--text-tertiary)", display: "block", marginBottom: "3px" }}>☕ Mug Text</label>
+                    <input
+                      type="text"
+                      defaultValue={selectedAgent.characterConfig?.mugText || "BOSS"}
+                      maxLength={6}
+                      onBlur={async (e) => {
+                        const res = await fetch("/api/factory/agents", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ id: selectedAgent.id, character_config: { ...selectedAgent.characterConfig, mugText: e.target.value } }),
+                        });
+                        if (res.ok) { const d = await fetch('/api/factory').then(r=>r.json()); setData(d); const updated = (d.liveAgents||[]).find((a:any)=>a.id===selectedAgent.id); if(updated) setSelectedAgent(updated); }
+                      }}
+                      style={{ width: "100%", height: "28px", border: "1px solid var(--border-subtle)", borderRadius: "4px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: "12px", padding: "0 8px", textAlign: "center", fontWeight: 700 }}
+                      placeholder="BOSS"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
