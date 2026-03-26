@@ -77,6 +77,7 @@ interface WalkingAgent {
   emoji: string;
   role: string;
   model?: string;
+  characterConfig?: { skinColor?: string; hairStyle?: string; hairColor?: string; premium?: boolean; mugText?: string };
   direction: "toWork" | "toDesk";
   startX: number;
   startY: number;
@@ -1152,6 +1153,7 @@ function WorkstationFigure({
           sitting={agent.status === "completed" || agent.status === "failed"}
           agentId={agent.id}
           agentName={agent.name}
+          characterConfig={agent.characterConfig}
         />
         {/* Mini workbench */}
         {isActive && (
@@ -1322,6 +1324,7 @@ function WalkingOverlay({ walker }: { walker: WalkingAgent }) {
           sitting={false}
           agentId={walker.id}
           agentName={walker.name}
+          characterConfig={walker.characterConfig}
         />
       </div>
     </div>
@@ -1899,6 +1902,7 @@ export default function AgentFactoryPage() {
             emoji: agent.emoji,
             role: agent.role,
             model: agent.model,
+            characterConfig: agent.characterConfig,
             direction: "toWork",
             startX: deskRect.left + deskRect.width / 2 - 14,
             startY: deskRect.top + 10,
@@ -1929,6 +1933,7 @@ export default function AgentFactoryPage() {
             emoji: agent.emoji,
             role: agent.role,
             model: agent.model,
+            characterConfig: agent.characterConfig,
             direction: "toDesk",
             startX: startX - 14,
             startY: startY - 20,
