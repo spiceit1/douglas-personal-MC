@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -23,6 +23,7 @@ interface Agent {
   status: "active" | "idle" | "standby" | "scheduled";
   statusText?: string | null;
   type: string;
+  description?: string;
 }
 
 interface LiveAgent {
@@ -59,6 +60,22 @@ interface FactoryData {
   liveAgents: LiveAgent[];
   scanner: ScannerInfo;
   stats: Stats;
+}
+
+// ─── Walking Animation State ────────────────────────────────────────────────
+
+interface WalkingAgent {
+  id: string;
+  name: string;
+  emoji: string;
+  role: string;
+  model?: string;
+  direction: "toWork" | "toDesk";
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  startTime: number;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -111,6 +128,606 @@ const PRIORITY_COLORS: Record<string, string> = {
   medium: "#f0b429",
   low: "#4d7cfe",
 };
+
+const WALK_DURATION = 1500; // ms
+
+// ─── Helper: Agent color classification ──────────────────────────────────────
+
+function getAgentColor(role: string, status?: string): { shirt: string; border: string; glow: string; bg: string } {
+  if (role === "Sub-Agent") {
+    return { shirt: "#26c97a", border: "#46e99a", glow: "rgba(38,201,122,0.5)", bg: "#0a1a10" };
+  }
+  if (role === "Dedicated Agent" || status === "standby" || status === "scheduled") {
+    return { shirt: "#4d7cfe", border: "#6d9cff", glow: "rgba(77,124,254,0.5)", bg: "#0f1a2e" };
+  }
+  return { shirt: "#7c5cfc", border: "#9b7cff", glow: "rgba(124,92,252,0.5)", bg: "#1a1030" };
+}
+
+function isPrimaryAgent(role: string, status?: string): boolean {
+  return role !== "Sub-Agent" && role !== "Dedicated Agent" && status !== "standby" && status !== "scheduled";
+}
+
+function isDedicatedAgent(role: string, status?: string): boolean {
+  return role === "Dedicated Agent" || status === "standby" || status === "scheduled";
+}
+
+function isShmack(agent: { id?: string; name?: string }): boolean {
+  return agent.id === "shmack" || agent.name === "Mr. Shmack";
+}
+
+// ─── Person Figure Component ─────────────────────────────────────────────────
+
+function PersonFigure({
+  emoji,
+  role,
+  status,
+  size = "normal",
+  bouncing = false,
+  sitting = false,
+  agentId,
+  agentName,
+}: {
+  emoji: string;
+  role: string;
+  status?: string;
+  size?: "normal" | "small";
+  bouncing?: boolean;
+  sitting?: boolean;
+  agentId?: string;
+  agentName?: string;
+}) {
+  const colors = getAgentColor(role, status);
+  const isSmall = size === "small";
+  const headSize = isSmall ? 14 : 18;
+  const bodyW = isSmall ? 22 : 28;
+  const bodyH = isSmall ? 16 : 22;
+  const fontSize = isSmall ? 9 : 12;
+  const legW = isSmall ? 5 : 6;
+  const legH = isSmall ? 8 : 10;
+  const isShmackAgent = isShmack({ id: agentId, name: agentName });
+  const skinColor = isShmackAgent ? "#f5d0b0" : "#d4a574";
+  const skinBorder = isShmackAgent ? "#e8c0a0" : "#c4956a";
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        animation: bouncing ? "agentBounce 1s ease-in-out infinite" : "none",
+      }}
+    >
+      {/* Hair (Shmack only) */}
+      {isShmackAgent && (
+        <div style={{
+          width: headSize * 0.7,
+          height: isSmall ? 4 : 6,
+          background: "#c0442a",
+          borderRadius: `${isSmall ? 3 : 4}px ${isSmall ? 3 : 4}px 1px 1px`,
+          marginBottom: -2,
+          zIndex: 3,
+          border: "1px solid #a03820",
+          borderBottom: "none",
+        }} />
+      )}
+      {/* Head */}
+      <div style={{
+        width: headSize,
+        height: headSize,
+        borderRadius: "50%",
+        background: skinColor,
+        border: `1px solid ${skinBorder}`,
+        marginBottom: sitting ? -2 : -3,
+        zIndex: 2,
+        position: "relative",
+      }} />
+      {/* Body/Shirt with emoji */}
+      <div style={{
+        width: bodyW,
+        height: bodyH,
+        borderRadius: `${isSmall ? 3 : 5}px ${isSmall ? 3 : 5}px 2px 2px`,
+        background: colors.shirt,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize,
+        lineHeight: 1,
+        zIndex: 2,
+        border: `1px solid ${colors.border}`,
+        boxShadow: bouncing ? `0 0 12px ${colors.glow}` : "none",
+      }}>
+        {emoji}
+      </div>
+      {/* Legs (only when standing/walking, not sitting) */}
+      {!sitting && (
+        <div style={{ display: "flex", gap: isSmall ? 3 : 4, marginTop: -1, zIndex: 1 }}>
+          <div style={{
+            width: legW,
+            height: legH,
+            background: "#3a3a50",
+            borderRadius: "1px 1px 2px 2px",
+            border: "1px solid #4a4a60",
+          }} />
+          <div style={{
+            width: legW,
+            height: legH,
+            background: "#3a3a50",
+            borderRadius: "1px 1px 2px 2px",
+            border: "1px solid #4a4a60",
+          }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Desk Component (with chair + nameplate) ────────────────────────────────
+
+function AgentDesk({
+  agent,
+  isWorking,
+  onClick,
+  onMount,
+}: {
+  agent: { id: string; name: string; emoji: string; role: string; model?: string; status: string; taskSummary?: string };
+  isWorking: boolean;
+  onClick?: () => void;
+  onMount?: (el: HTMLDivElement | null) => void;
+}) {
+  const primary = isPrimaryAgent(agent.role, agent.status);
+  const colors = getAgentColor(agent.role, agent.status);
+  const modelStr = agent.model || "";
+  const modelColor = modelStr.includes("opus") ? "#f0b429" : modelStr.includes("haiku") ? "#26c97a" : "#7c5cfc";
+  const statusColor = isWorking ? "#26c97a" : agent.status === "idle" ? "#9898a0" : agent.status === "scheduled" ? "#f0b429" : "#888";
+  const statusText = isWorking
+    ? "→ In Progress"
+    : agent.status === "idle"
+    ? "○ IDLE"
+    : agent.status === "scheduled"
+    ? "⏰ SCHEDULED"
+    : "💤 STANDBY";
+
+  const accentColor = primary ? "#7c5cfc" : "#4d7cfe";
+
+  return (
+    <div
+      ref={(el) => onMount?.(el)}
+      onClick={onClick}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "2px",
+        padding: "8px 14px 6px",
+        background: isWorking
+          ? `linear-gradient(135deg, ${colors.bg}80 0%, #151520 100%)`
+          : `linear-gradient(135deg, ${colors.bg} 0%, #151520 100%)`,
+        border: `1px solid ${accentColor}${isWorking ? "30" : "50"}`,
+        borderTop: `2px solid ${accentColor}`,
+        borderRadius: "6px",
+        minWidth: "85px",
+        cursor: onClick && !isWorking ? "pointer" : "default",
+        opacity: isWorking ? 0.6 : 1,
+        transition: "opacity 0.3s ease",
+        position: "relative",
+      }}
+    >
+      {/* Desk area: person + monitor */}
+      <div style={{
+        display: "flex",
+        alignItems: "flex-end",
+        gap: "6px",
+        minHeight: "52px",
+        justifyContent: "center",
+      }}>
+        {/* Person in chair OR empty chair */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
+          {isWorking ? (
+            /* Empty chair — agent walked away */
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", opacity: 0.4 }}>
+              {/* Chair back */}
+              <div style={{
+                width: 22, height: 14,
+                background: "#3a3040",
+                borderRadius: "4px 4px 0 0",
+                border: "1px solid #5a5060",
+                borderBottom: "none",
+              }} />
+              {/* Chair seat */}
+              <div style={{
+                width: 26, height: 6,
+                background: "#4a4050",
+                borderRadius: "1px",
+                border: "1px solid #5a5060",
+              }} />
+              {/* Chair legs */}
+              <div style={{ display: "flex", gap: 10, marginTop: 1 }}>
+                <div style={{ width: 3, height: 8, background: "#5a5060", borderRadius: 1 }} />
+                <div style={{ width: 3, height: 8, background: "#5a5060", borderRadius: 1 }} />
+              </div>
+            </div>
+          ) : (
+            /* Person sitting */
+            <div style={{ position: "relative" }}>
+              <div style={{ position: "relative", zIndex: 2 }}>
+                <PersonFigure
+                  emoji={agent.emoji}
+                  role={agent.role}
+                  status={agent.status}
+                  sitting={true}
+                  agentId={agent.id}
+                  agentName={agent.name}
+                />
+              </div>
+              {/* Chair under the person */}
+              <div style={{
+                position: "absolute",
+                bottom: -4,
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                opacity: 0.5,
+              }}>
+                <div style={{ width: 26, height: 5, background: "#4a4050", borderRadius: 1, border: "1px solid #5a5060" }} />
+                <div style={{ display: "flex", gap: 10, marginTop: 1 }}>
+                  <div style={{ width: 3, height: 6, background: "#5a5060", borderRadius: 1 }} />
+                  <div style={{ width: 3, height: 6, background: "#5a5060", borderRadius: 1 }} />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Monitor/desk icon */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", opacity: isWorking ? 0.3 : 0.6 }}>
+          {/* Monitor screen */}
+          <div style={{
+            width: 18, height: 14,
+            background: isWorking ? "#1a1a2e" : "#1a2a3a",
+            border: `1px solid ${isWorking ? "#333" : accentColor}60`,
+            borderRadius: "2px 2px 0 0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            {!isWorking && (
+              <div style={{ width: 10, height: 2, background: accentColor, borderRadius: 1, opacity: 0.6 }} />
+            )}
+          </div>
+          {/* Monitor stand */}
+          <div style={{ width: 4, height: 4, background: "#555" }} />
+          <div style={{ width: 12, height: 2, background: "#555", borderRadius: 1 }} />
+        </div>
+      </div>
+
+      {/* Nameplate */}
+      <div style={{
+        background: "#2a2a3a",
+        border: `1px solid ${accentColor}40`,
+        borderRadius: "2px",
+        padding: "2px 8px",
+        marginTop: "2px",
+      }}>
+        <div style={{
+          fontSize: "9px",
+          fontWeight: 700,
+          color: "#ffffff",
+          textAlign: "center",
+          lineHeight: 1.2,
+          whiteSpace: "nowrap",
+          fontFamily: "'Courier New', monospace",
+          display: "flex",
+          alignItems: "center",
+          gap: "3px",
+        }}>
+          {isShmack(agent) && <span style={{ fontSize: "8px" }} title="Main Agent">👑</span>}
+          {agent.name}
+        </div>
+      </div>
+
+      {/* Model badge */}
+      {modelStr && (
+        <span style={{
+          fontSize: "7px",
+          color: modelColor,
+          background: modelColor + "18",
+          border: `1px solid ${modelColor}40`,
+          padding: "1px 4px",
+          borderRadius: "4px",
+          fontWeight: 700,
+        }}>
+          {modelStr}
+        </span>
+      )}
+
+      {/* Status */}
+      <div style={{
+        fontSize: "8px",
+        color: statusColor,
+        fontWeight: 600,
+        textAlign: "center",
+        lineHeight: 1.2,
+        maxWidth: "90px",
+      }}>
+        {statusText}
+      </div>
+    </div>
+  );
+}
+
+// ─── Workstation Figure (In Progress zone) ──────────────────────────────────
+
+function WorkstationFigure({
+  agent,
+  onClick,
+}: {
+  agent: LiveAgent;
+  onClick: () => void;
+}) {
+  const isActive = agent.status === "active";
+  const colors = getAgentColor(agent.role);
+  const modelColor = agent.model?.includes("opus")
+    ? "#f0b429"
+    : agent.model?.includes("haiku")
+    ? "#26c97a"
+    : "#7c5cfc";
+
+  const [elapsed, setElapsed] = useState("");
+
+  useEffect(() => {
+    const started = new Date(agent.startedAt).getTime();
+    const update = () => {
+      const end = agent.completedAt ? new Date(agent.completedAt).getTime() : Date.now();
+      const secs = Math.floor((end - started) / 1000);
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      if (m > 0) setElapsed(`${m}m ${s}s`);
+      else setElapsed(`${s}s`);
+    };
+    update();
+    if (isActive) {
+      const interval = setInterval(update, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [agent.startedAt, agent.completedAt, isActive]);
+
+  return (
+    <div
+      ref={figureRef}
+      onClick={onClick}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "4px",
+        padding: "10px 12px 8px",
+        minWidth: "100px",
+        maxWidth: "140px",
+        background: `linear-gradient(135deg, ${colors.bg} 0%, #151520 100%)`,
+        border: `1px solid ${colors.shirt}${isActive ? "60" : "40"}`,
+        borderTop: `2px solid ${colors.shirt}`,
+        borderRadius: "6px",
+        cursor: "pointer",
+        position: "relative",
+        animation: isActive ? "liveAgentGlow 2s ease-in-out infinite" : "none",
+        opacity: agent.status === "completed" || agent.status === "failed" ? 0.65 : 1,
+        transition: "opacity 0.5s ease",
+      }}
+    >
+      {/* LIVE badge */}
+      {isActive && (
+        <div style={{
+          position: "absolute",
+          top: "-6px",
+          right: "-6px",
+          background: "#f05b5b",
+          color: "#ffffff",
+          fontSize: "8px",
+          fontWeight: 800,
+          padding: "2px 5px",
+          borderRadius: "3px",
+          letterSpacing: "0.1em",
+          animation: "scannerPulse 1.5s ease-in-out infinite",
+        }}>
+          LIVE
+        </div>
+      )}
+
+      {/* Completed check */}
+      {(agent.status === "completed" || agent.status === "failed") && (
+        <div style={{
+          position: "absolute",
+          top: "-6px",
+          right: "-6px",
+          background: agent.status === "completed" ? "#26c97a" : "#f05b5b",
+          color: "#ffffff",
+          fontSize: "10px",
+          fontWeight: 800,
+          padding: "1px 4px",
+          borderRadius: "3px",
+        }}>
+          {agent.status === "completed" ? "✓" : "✕"}
+        </div>
+      )}
+
+      {/* Person figure standing at workbench */}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: "6px" }}>
+        <PersonFigure
+          emoji={agent.emoji}
+          role={agent.role}
+          bouncing={isActive}
+          sitting={agent.status === "completed" || agent.status === "failed"}
+          agentId={agent.id}
+          agentName={agent.name}
+        />
+        {/* Workbench */}
+        {isActive && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", opacity: 0.6 }}>
+            <div style={{
+              width: 16, height: 20,
+              background: "#2a2a3a",
+              border: `1px solid ${colors.shirt}40`,
+              borderRadius: "2px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
+              <div style={{ width: 8, height: 8, background: colors.shirt, borderRadius: 1, opacity: 0.5, animation: "scannerPulse 2s ease-in-out infinite" }} />
+            </div>
+            <div style={{ width: 20, height: 3, background: "#3a3a4a", borderRadius: 1 }} />
+          </div>
+        )}
+      </div>
+
+      {/* Name */}
+      <div style={{
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "#ffffff",
+        textAlign: "center",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        maxWidth: "120px",
+      }} title={agent.name}>
+        {agent.name}
+      </div>
+
+      {/* Badges */}
+      {agent.role === "Sub-Agent" && (
+        <span style={{
+          fontSize: "8px",
+          fontWeight: 700,
+          color: "#f0b429",
+          background: "#f0b42918",
+          border: "1px solid #f0b42940",
+          padding: "1px 6px",
+          borderRadius: "3px",
+          letterSpacing: "0.08em",
+        }} title="Spawned for a specific task. Disappears after completion.">
+          SUB-AGENT
+        </span>
+      )}
+      {agent.role === "Dedicated Agent" && (
+        <span style={{
+          fontSize: "8px",
+          fontWeight: 700,
+          color: "#4d7cfe",
+          background: "#4d7cfe18",
+          border: "1px solid #4d7cfe40",
+          padding: "1px 6px",
+          borderRadius: "3px",
+          letterSpacing: "0.08em",
+        }} title="Always-on agent with a single purpose.">
+          DEDICATED
+        </span>
+      )}
+
+      {/* Task clipboard */}
+      {agent.taskSummary && (
+        <div style={{
+          fontSize: "9px",
+          color: "#ffffff",
+          opacity: 0.7,
+          textAlign: "center",
+          lineHeight: 1.3,
+          maxWidth: "120px",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          background: "#1a1a2e80",
+          border: "1px solid #ffffff10",
+          borderRadius: "3px",
+          padding: "3px 6px",
+        }} title={agent.taskSummary}>
+          📋 {agent.taskSummary.length > 55 ? agent.taskSummary.slice(0, 52) + "..." : agent.taskSummary}
+        </div>
+      )}
+
+      {/* Model + time */}
+      <div style={{ display: "flex", gap: "4px", alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+        {agent.model && (
+          <span style={{
+            fontSize: "9px",
+            color: modelColor,
+            padding: "1px 6px",
+            background: modelColor + "18",
+            border: `1px solid ${modelColor}40`,
+            borderRadius: "8px",
+            fontWeight: 700,
+          }}>
+            {agent.model}
+          </span>
+        )}
+        <span style={{
+          fontSize: "9px",
+          color: isActive ? "#4d7cfe" : "#26c97a",
+          fontWeight: 600,
+        }}>
+          {elapsed}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Walking Overlay ─────────────────────────────────────────────────────────
+
+function WalkingOverlay({ walker }: { walker: WalkingAgent }) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let raf: number;
+    const animate = () => {
+      const now = Date.now();
+      const p = Math.min(1, (now - walker.startTime) / WALK_DURATION);
+      setProgress(p);
+      if (p < 1) raf = requestAnimationFrame(animate);
+    };
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [walker.startTime]);
+
+  // Easing: ease-in-out
+  const ease = (t: number) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  const p = ease(progress);
+
+  const x = walker.startX + (walker.endX - walker.startX) * p;
+  const y = walker.startY + (walker.endY - walker.startY) * p;
+
+  // Stand-up effect: rise slightly at the start
+  const riseOffset = progress < 0.2 ? -(progress / 0.2) * 10 : progress < 0.3 ? -10 : -10 + (Math.min(progress, 0.8) - 0.3) / 0.5 * 10;
+
+  return (
+    <div style={{
+      position: "fixed",
+      left: x,
+      top: y + riseOffset,
+      zIndex: 1000,
+      pointerEvents: "none",
+      transition: "none",
+      filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))",
+    }}>
+      <div style={{
+        animation: progress > 0.15 && progress < 0.85 ? "walkingBounce 0.3s ease-in-out infinite" : "none",
+      }}>
+        <PersonFigure
+          emoji={walker.emoji}
+          role={walker.role}
+          bouncing={false}
+          sitting={false}
+          agentId={walker.id}
+          agentName={walker.name}
+        />
+      </div>
+    </div>
+  );
+}
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -264,8 +881,7 @@ function PixelTaskCard({ task, onSelect, isMobile }: { task: Task; onSelect: (ta
           lineHeight: "1.4",
           fontWeight: 600,
           maxWidth: "100%",
-          // On mobile always wrap; on desktop truncate short titles
-          ...(isMobile || isLong ? { whiteSpace: "normal" } : { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }),
+          ...(isMobile || isLong ? { whiteSpace: "normal" as const } : { overflow: "hidden" as const, textOverflow: "ellipsis" as const, whiteSpace: "nowrap" as const }),
         }}
         title={task.title}
       >
@@ -295,415 +911,17 @@ function PixelTaskCard({ task, onSelect, isMobile }: { task: Task; onSelect: (ta
   );
 }
 
-function AgentCharacter({
-  agent,
-  working,
-}: {
-  agent: Agent;
-  working: boolean;
-}) {
-  const isActive = agent.status === "active";
-  const isIdle = agent.status === "idle";
-  const isOnFloor = isActive || isIdle;
-
-  const dotColor =
-    agent.status === "active"
-      ? "#26c97a"
-      : agent.status === "idle"
-      ? "#4d7cfe"
-      : agent.status === "scheduled"
-      ? "#f0b429"
-      : "#888888";
-
-  const dotGlow =
-    agent.status === "active" ? `0 0 5px #26c97a` : "none";
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "6px",
-        padding: "10px 8px",
-        minWidth: "80px",
-        opacity: isIdle ? 0.6 : 1,
-        transition: "opacity 0.3s ease",
-      }}
-    >
-      <div
-        style={{
-          width: "56px",
-          height: "56px",
-          background: isActive
-            ? "linear-gradient(135deg, #1e1a3a 0%, #2a1e5a 100%)"
-            : isIdle
-            ? "linear-gradient(135deg, #1a1a2e 0%, #1e1a3a 100%)"
-            : "var(--bg-elevated)",
-          border: `2px solid ${isActive ? "#7c5cfc" : isIdle ? "#4d7cfe60" : "var(--border-subtle)"}`,
-          borderRadius: "4px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "32px",
-          boxShadow: isActive
-            ? "0 0 12px rgba(124,92,252,0.4), inset 0 1px 0 rgba(255,255,255,0.08)"
-            : "none",
-          animation: isActive && working ? "agentBounce 1s ease-in-out infinite" : "none",
-          position: "relative",
-        }}
-      >
-        {agent.emoji}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "3px",
-            right: "3px",
-            width: "8px",
-            height: "8px",
-            borderRadius: "2px",
-            background: dotColor,
-            boxShadow: dotGlow,
-          }}
-        />
-      </div>
-
-      {working && isOnFloor && (
-        <div
-          style={{
-            width: "64px",
-            height: "8px",
-            background: "linear-gradient(180deg, #3a2e20 0%, #2a2018 100%)",
-            borderRadius: "2px",
-            border: "1px solid #4a3e28",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.6)",
-            marginTop: "-4px",
-          }}
-        />
-      )}
-
-      <div
-        style={{
-          background: "var(--bg-elevated)",
-          border: agent.name === "Mr. Shmack" ? "1px solid #f0b42980" : "1px solid var(--border-subtle)",
-          borderRadius: "3px",
-          padding: "3px 8px",
-          fontSize: "12px",
-          color: "#ffffff",
-          textAlign: "center",
-          whiteSpace: "nowrap",
-          fontWeight: 600,
-          fontFamily: "'Courier New', monospace",
-          display: "flex",
-          alignItems: "center",
-          gap: "3px",
-        }}
-      >
-        {agent.name === "Mr. Shmack" && (
-          <span style={{ fontSize: "10px" }} title="Main Agent">👑</span>
-        )}
-        {agent.name}
-      </div>
-
-      <div
-        style={{
-          fontSize: "10px",
-          color: isActive ? "#b8a0ff" : "#ffffff",
-          textAlign: "center",
-        }}
-      >
-        {agent.role}
-      </div>
-
-      {agent.statusText && (
-        <div
-          style={{
-            fontSize: "9px",
-            color: isActive ? "#26c97a" : "#888888",
-            textAlign: "center",
-            maxWidth: "100px",
-            lineHeight: 1.3,
-            fontWeight: isActive ? 600 : 400,
-          }}
-        >
-          {agent.statusText}
-        </div>
-      )}
-
-      {agent.model && (
-        <div
-          style={{
-            fontSize: "9px",
-            color: "#ffffff",
-            textAlign: "center",
-            marginTop: 2,
-            padding: "1px 6px",
-            background: "#7c5cfc18",
-            borderRadius: 8,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {agent.model}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function LiveAgentCard({ agent, onSelect }: { agent: LiveAgent; onSelect: (agent: LiveAgent) => void }) {
-  const isActive = agent.status === "active";
-  const isCompleted = agent.status === "completed";
-
-  const [elapsed, setElapsed] = useState("");
-
-  useEffect(() => {
-    const started = new Date(agent.startedAt).getTime();
-    const update = () => {
-      const end = agent.completedAt ? new Date(agent.completedAt).getTime() : Date.now();
-      const secs = Math.floor((end - started) / 1000);
-      const m = Math.floor(secs / 60);
-      const s = secs % 60;
-      if (m > 0) setElapsed(`${m}m ${s}s`);
-      else setElapsed(`${s}s`);
-    };
-    update();
-    if (isActive) {
-      const interval = setInterval(update, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [agent.startedAt, agent.completedAt, isActive]);
-
-  const modelColor = agent.model?.includes("opus")
-    ? "#f0b429"
-    : agent.model?.includes("haiku")
-    ? "#26c97a"
-    : "#7c5cfc";
-
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "6px",
-        padding: "12px 10px",
-        minWidth: "100px",
-        maxWidth: "140px",
-        background: agent.role === "Dedicated Agent"
-          ? "linear-gradient(135deg, #0f1a2e 0%, #101525 100%)"
-          : agent.role === "Sub-Agent"
-          ? (isActive ? "linear-gradient(135deg, #0a1a10 0%, #102a18 100%)" : "linear-gradient(135deg, #081a11 0%, #0f2a1a 100%)")
-          : (isActive ? "linear-gradient(135deg, #1a1030 0%, #151525 100%)" : "var(--bg-elevated)"),
-        border: agent.role === "Dedicated Agent"
-          ? `1px solid #4d7cfe${isActive ? "80" : "60"}`
-          : agent.role === "Sub-Agent"
-          ? `1px solid #26c97a${isActive ? "80" : "60"}`
-          : `1px solid #7c5cfc${isActive ? "80" : "60"}`,
-        borderTop: agent.role === "Dedicated Agent"
-          ? "2px solid #4d7cfe"
-          : agent.role === "Sub-Agent"
-          ? "2px solid #26c97a"
-          : "2px solid #7c5cfc",
-        borderRadius: "6px",
-        position: "relative",
-        animation: isActive ? "liveAgentGlow 2s ease-in-out infinite" : "none",
-        opacity: isCompleted ? 0.75 : 1,
-        transition: "opacity 0.5s ease",
-        cursor: "pointer",
-      }}
-      onClick={() => onSelect(agent)}
-    >
-      {isActive && (
-        <div
-          style={{
-            position: "absolute",
-            top: "-6px",
-            right: "-6px",
-            background: "#f05b5b",
-            color: "#ffffff",
-            fontSize: "8px",
-            fontWeight: 800,
-            padding: "2px 5px",
-            borderRadius: "3px",
-            letterSpacing: "0.1em",
-            animation: "scannerPulse 1.5s ease-in-out infinite",
-          }}
-        >
-          LIVE
-        </div>
-      )}
-
-      {isCompleted && (
-        <div
-          style={{
-            position: "absolute",
-            top: "-6px",
-            right: "-6px",
-            background: "#26c97a",
-            color: "#ffffff",
-            fontSize: "10px",
-            fontWeight: 800,
-            padding: "1px 4px",
-            borderRadius: "3px",
-          }}
-        >
-          ✓
-        </div>
-      )}
-
-      {/* Person figure with emoji shirt */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          animation: isActive ? "agentBounce 1s ease-in-out infinite" : "none",
-        }}
-      >
-        {/* Head */}
-        <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#d4a574", border: "1px solid #c4956a", marginBottom: "-3px", zIndex: 2 }} />
-        {/* Body/shirt with emoji */}
-        <div style={{
-          width: "28px", height: "22px", borderRadius: "5px 5px 2px 2px",
-          background: agent.role === "Dedicated Agent" ? "#4d7cfe" : agent.role === "Sub-Agent" ? "#26c97a" : "#7c5cfc",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "12px", lineHeight: 1, zIndex: 2,
-          border: `1px solid ${agent.role === "Dedicated Agent" ? "#6d9cff" : agent.role === "Sub-Agent" ? "#46e99a" : "#9b7cff"}`,
-          boxShadow: isActive ? `0 0 12px ${agent.role === "Dedicated Agent" ? "rgba(77,124,254,0.5)" : agent.role === "Sub-Agent" ? "rgba(38,201,122,0.5)" : "rgba(124,92,252,0.5)"}` : "none",
-        }}>
-          {agent.emoji}
-        </div>
-      </div>
-
-      {isActive && (
-        <div
-          style={{
-            width: "56px",
-            height: "6px",
-            background: "linear-gradient(180deg, #3a2e20 0%, #2a2018 100%)",
-            borderRadius: "2px",
-            border: "1px solid #4a3e28",
-            marginTop: "-4px",
-          }}
-        />
-      )}
-
-      <div
-        style={{
-          fontSize: "11px",
-          fontWeight: 700,
-          color: "#ffffff",
-          textAlign: "center",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          maxWidth: "120px",
-        }}
-        title={agent.name}
-      >
-        {agent.name}
-      </div>
-
-      {agent.role === "Sub-Agent" && (
-        <span
-          style={{
-            fontSize: "8px",
-            fontWeight: 700,
-            color: "#f0b429",
-            background: "#f0b42918",
-            border: "1px solid #f0b42940",
-            padding: "1px 6px",
-            borderRadius: "3px",
-            letterSpacing: "0.08em",
-          }}
-          title="Spawned for a specific task. Disappears after completion."
-        >
-          SUB-AGENT
-        </span>
-      )}
-      {agent.role === "Dedicated Agent" && (
-        <span
-          style={{
-            fontSize: "8px",
-            fontWeight: 700,
-            color: "#4d7cfe",
-            background: "#4d7cfe18",
-            border: "1px solid #4d7cfe40",
-            padding: "1px 6px",
-            borderRadius: "3px",
-            letterSpacing: "0.08em",
-          }}
-          title="Always-on agent with a single purpose. Runs on a schedule."
-        >
-          DEDICATED
-        </span>
-      )}
-      {agent.taskSummary && (
-        <div
-          style={{
-            fontSize: "9px",
-            color: "#ffffff",
-            opacity: 0.7,
-            textAlign: "center",
-            lineHeight: 1.3,
-            maxWidth: "120px",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-          }}
-          title={agent.taskSummary}
-        >
-          {agent.taskSummary.length > 60
-            ? agent.taskSummary.slice(0, 57) + "..."
-            : agent.taskSummary}
-        </div>
-      )}
-
-      <div style={{ display: "flex", gap: "4px", alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
-        {agent.model && (
-          <span
-            style={{
-              fontSize: "9px",
-              color: modelColor,
-              padding: "1px 6px",
-              background: modelColor + "18",
-              border: `1px solid ${modelColor}40`,
-              borderRadius: "8px",
-              fontWeight: 700,
-            }}
-          >
-            {agent.model}
-          </span>
-        )}
-        <span
-          style={{
-            fontSize: "9px",
-            color: isActive ? "#4d7cfe" : "#26c97a",
-            fontWeight: 600,
-          }}
-        >
-          {elapsed}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 // ─── Mobile Zone Section ──────────────────────────────────────────────────────
 
 function MobileZoneSection({
   zoneKey,
   tasks,
-  agents,
   liveAgents = [],
   onSelectTask,
   onSelectAgent,
 }: {
   zoneKey: keyof typeof ZONE_CONFIG;
   tasks: Task[];
-  agents: Agent[];
   liveAgents?: LiveAgent[];
   onSelectTask: (task: Task) => void;
   onSelectAgent?: (agent: LiveAgent) => void;
@@ -711,10 +929,6 @@ function MobileZoneSection({
   const cfg = ZONE_CONFIG[zoneKey];
   const [collapsed, setCollapsed] = useState(zoneKey === "done");
 
-  const workingAgents = agents.filter((a) => {
-    if (zoneKey === "in-progress") return a.status === "active";
-    return false;
-  });
   const zoneLiveAgents = liveAgents.filter((a) => {
     if (zoneKey === "in-progress") return a.status === "active";
     if (zoneKey === "done") return a.status === "completed" || a.status === "failed";
@@ -781,20 +995,11 @@ function MobileZoneSection({
 
       {!collapsed && (
         <div style={{ borderTop: `1px solid var(--border-subtle)` }}>
-          {/* Agents row */}
-          {workingAgents.length > 0 && (
-            <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "6px", padding: "12px 8px 6px" }}>
-              {workingAgents.map((agent) => (
-                <AgentCharacter key={agent.id} agent={agent} working={true} />
-              ))}
-            </div>
-          )}
-
-          {/* Sub-agents working in this zone (primary agents shown in AGENTS row, not here) */}
-          {zoneLiveAgents.filter(a => a.role === "Sub-Agent" || (a.role === "Dedicated Agent" && a.status === "active")).length > 0 && (
+          {/* Live agents in this zone */}
+          {zoneLiveAgents.length > 0 && (
             <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "8px", padding: "12px 8px 8px", borderBottom: `1px solid var(--border-subtle)` }}>
-              {zoneLiveAgents.filter(a => a.role === "Sub-Agent" || (a.role === "Dedicated Agent" && a.status === "active")).map((agent) => (
-                <LiveAgentCard key={agent.id} agent={agent} onSelect={onSelectAgent || (() => {})} />
+              {zoneLiveAgents.map((agent) => (
+                <WorkstationFigure key={agent.id} agent={agent} onClick={() => onSelectAgent?.(agent)} />
               ))}
             </div>
           )}
@@ -822,23 +1027,17 @@ function MobileZoneSection({
 function FactoryZone({
   zoneKey,
   tasks,
-  agents,
   liveAgents = [],
   onSelectTask,
   onSelectAgent,
 }: {
   zoneKey: keyof typeof ZONE_CONFIG;
   tasks: Task[];
-  agents: Agent[];
   liveAgents?: LiveAgent[];
   onSelectTask: (task: Task) => void;
   onSelectAgent?: (agent: LiveAgent) => void;
 }) {
   const cfg = ZONE_CONFIG[zoneKey];
-  const workingAgents = agents.filter((a) => {
-    if (zoneKey === "in-progress") return a.status === "active";
-    return false;
-  });
 
   const zoneLiveAgents = liveAgents.filter((a) => {
     if (zoneKey === "in-progress") return a.status === "active";
@@ -914,26 +1113,8 @@ function FactoryZone({
         </span>
       </div>
 
-      {/* Agents row (for in-progress) */}
-      {workingAgents.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            flexWrap: "wrap",
-            gap: "6px",
-            padding: "12px 8px 6px",
-            borderBottom: zoneLiveAgents.length > 0 ? "none" : `1px solid var(--border-subtle)`,
-          }}
-        >
-          {workingAgents.map((agent) => (
-            <AgentCharacter key={agent.id} agent={agent} working={true} />
-          ))}
-        </div>
-      )}
-
-      {/* Sub-agents working in this zone (primary agents shown in AGENTS row) */}
-      {zoneLiveAgents.filter(a => a.role === "Sub-Agent" || (a.role === "Dedicated Agent" && a.status === "active")).length > 0 && (
+      {/* Live agents in this zone */}
+      {zoneLiveAgents.length > 0 && (
         <div
           style={{
             display: "flex",
@@ -944,8 +1125,8 @@ function FactoryZone({
             borderBottom: `1px solid var(--border-subtle)`,
           }}
         >
-          {zoneLiveAgents.filter(a => a.role === "Sub-Agent" || (a.role === "Dedicated Agent" && a.status === "active")).map((agent) => (
-            <LiveAgentCard key={agent.id} agent={agent} onSelect={onSelectAgent || (() => {})} />
+          {zoneLiveAgents.map((agent) => (
+            <WorkstationFigure key={agent.id} agent={agent} onClick={() => onSelectAgent?.(agent)} />
           ))}
         </div>
       )}
@@ -1042,6 +1223,12 @@ export default function AgentFactoryPage() {
   const [selectedAgent, setSelectedAgent] = useState<LiveAgent | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Walking animation state
+  const [walkingAgents, setWalkingAgents] = useState<WalkingAgent[]>([]);
+  const [transitioning, setTransitioning] = useState<Set<string>>(new Set());
+  const prevStatusRef = useRef<Map<string, string>>(new Map());
+  const deskRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -1074,6 +1261,94 @@ export default function AgentFactoryPage() {
     return () => clearInterval(ticker);
   }, []);
 
+  // ── Walking animation trigger ──
+  useEffect(() => {
+    if (!data || isMobile) return;
+
+    const liveAgents = data.liveAgents || [];
+    const newStatuses = new Map<string, string>();
+
+    // Build current status map for desk agents (primary + dedicated from liveAgents)
+    for (const la of liveAgents) {
+      if (la.role !== "Sub-Agent") {
+        newStatuses.set(la.id, la.status);
+      }
+    }
+
+    const prev = prevStatusRef.current;
+
+    for (const [id, status] of newStatuses) {
+      const oldStatus = prev.get(id);
+      if (!oldStatus) continue; // First appearance, skip animation
+
+      const agent = liveAgents.find(a => a.id === id);
+      if (!agent) continue;
+
+      // Agent went from not-active to active: walk desk → workstation
+      if (oldStatus !== "active" && status === "active") {
+        const deskEl = deskRefs.current.get(id);
+        // Use a placeholder position for the workstation (center of viewport, slightly down)
+        if (deskEl) {
+          const deskRect = deskEl.getBoundingClientRect();
+          const endX = window.innerWidth / 2;
+          const endY = window.innerHeight / 2;
+
+          setTransitioning(prev => new Set(prev).add(id));
+          setWalkingAgents(prev => [...prev, {
+            id,
+            name: agent.name,
+            emoji: agent.emoji,
+            role: agent.role,
+            model: agent.model,
+            direction: "toWork",
+            startX: deskRect.left + deskRect.width / 2 - 14,
+            startY: deskRect.top + 10,
+            endX: endX - 14,
+            endY: endY - 20,
+            startTime: Date.now(),
+          }]);
+
+          setTimeout(() => {
+            setWalkingAgents(prev => prev.filter(w => w.id !== id));
+            setTransitioning(prev => { const s = new Set(prev); s.delete(id); return s; });
+          }, WALK_DURATION);
+        }
+      }
+
+      // Agent went from active to not-active: walk workstation → desk
+      if (oldStatus === "active" && status !== "active") {
+        const deskEl = deskRefs.current.get(id);
+        if (deskEl) {
+          const deskRect = deskEl.getBoundingClientRect();
+          const startX = window.innerWidth / 2;
+          const startY = window.innerHeight / 2;
+
+          setTransitioning(prev => new Set(prev).add(id));
+          setWalkingAgents(prev => [...prev, {
+            id,
+            name: agent.name,
+            emoji: agent.emoji,
+            role: agent.role,
+            model: agent.model,
+            direction: "toDesk",
+            startX: startX - 14,
+            startY: startY - 20,
+            endX: deskRect.left + deskRect.width / 2 - 14,
+            endY: deskRect.top + 10,
+            startTime: Date.now(),
+          }]);
+
+          setTimeout(() => {
+            setWalkingAgents(prev => prev.filter(w => w.id !== id));
+            setTransitioning(prev => { const s = new Set(prev); s.delete(id); return s; });
+          }, WALK_DURATION);
+        }
+      }
+    }
+
+    prevStatusRef.current = newStatuses;
+  }, [data, isMobile]);
+
   const formatUptime = (secs: number) => {
     const h = Math.floor(secs / 3600);
     const m = Math.floor((secs % 3600) / 60);
@@ -1097,12 +1372,49 @@ export default function AgentFactoryPage() {
 
   const zones = (["backlog", "in-progress", "in-review", "done"] as const);
 
+  // ── Categorize agents for desk area ──
+  const primaryAgents = liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent");
+  const dedicatedFromFactory = liveAgents.filter(a => a.role === "Dedicated Agent");
+  const standbyFromTeam = agents.filter(a => a.status === "standby" || a.status === "scheduled");
+
+  type DeskAgent = {
+    id: string;
+    name: string;
+    emoji: string;
+    role: string;
+    model?: string;
+    status: string;
+    taskSummary?: string;
+    source: "factory" | "team";
+  };
+
+  const allDedicated: DeskAgent[] = [
+    ...dedicatedFromFactory.map(a => ({ id: a.id, name: a.name, emoji: a.emoji, role: a.role, model: a.model, status: a.status, taskSummary: a.taskSummary, source: "factory" as const })),
+    ...standbyFromTeam.map(a => ({
+      id: a.id, name: a.name, emoji: a.emoji, role: a.role,
+      model: a.model, status: a.status, taskSummary: a.statusText || "",
+      source: "team" as const,
+    })),
+  ];
+
+  // Build desk agents list (primary + dedicated that have desks)
+  const deskAgents: DeskAgent[] = [
+    ...primaryAgents.map(a => ({ id: a.id, name: a.name, emoji: a.emoji, role: a.role, model: a.model, status: a.status, taskSummary: a.taskSummary, source: "factory" as const })),
+    ...allDedicated,
+  ];
+
+  // Note: active/completed filtering happens inside FactoryZone and MobileZoneSection via liveAgents prop
+
   return (
     <>
       <style>{`
         @keyframes agentBounce {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-4px); }
+        }
+        @keyframes walkingBounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3px); }
         }
         @keyframes scannerPulse {
           0%, 100% { opacity: 1; }
@@ -1124,7 +1436,16 @@ export default function AgentFactoryPage() {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
         }
+        @keyframes deskIdle {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-1px); }
+        }
       `}</style>
+
+      {/* Walking overlays */}
+      {walkingAgents.map(w => (
+        <WalkingOverlay key={`walk-${w.id}-${w.startTime}`} walker={w} />
+      ))}
 
       <div
         style={{
@@ -1165,7 +1486,7 @@ export default function AgentFactoryPage() {
             </div>
           </div>
 
-          {/* Refresh indicator — inline on mobile */}
+          {/* Refresh indicator */}
           <div
             style={{
               display: "flex",
@@ -1194,7 +1515,7 @@ export default function AgentFactoryPage() {
             </span>
           </div>
 
-          {/* Live stats pills — full row on mobile */}
+          {/* Live stats pills */}
           <div
             style={{
               display: "flex",
@@ -1205,149 +1526,97 @@ export default function AgentFactoryPage() {
               marginLeft: isMobile ? "0" : "auto",
             }}
           >
-            <StatPill label="Active"      value={stats.activeTasks}                             color="#7c5cfc" isMobile={isMobile} />
-            <StatPill label="Done Today"  value={stats.completedToday}                          color="#26c97a" isMobile={isMobile} />
-            <StatPill label="Agents"      value={`${stats.activeAgents}/${stats.totalAgents}`}  color="#4d7cfe" isMobile={isMobile} />
+            <StatPill label="Active" value={stats.activeTasks} color="#7c5cfc" isMobile={isMobile} />
+            <StatPill label="Done Today" value={stats.completedToday} color="#26c97a" isMobile={isMobile} />
+            <StatPill label="Agents" value={`${stats.activeAgents}/${stats.totalAgents}`} color="#4d7cfe" isMobile={isMobile} />
             {(stats.liveAgentCount || 0) > 0 && (
-              <StatPill label="Live"       value={stats.liveAgentCount || 0}                     color="#f05b5b" isMobile={isMobile} />
+              <StatPill label="Live" value={stats.liveAgentCount || 0} color="#f05b5b" isMobile={isMobile} />
             )}
-            <StatPill label="Uptime"      value={formatUptime(uptime)}                          color="#f0b429" isMobile={isMobile} />
+            <StatPill label="Uptime" value={formatUptime(uptime)} color="#f0b429" isMobile={isMobile} />
           </div>
         </div>
 
-        {/* Standby row removed — merged into DEDICATED AGENTS row below */}
-
-        {/* ── Agent Desks — Primary + Dedicated with chairs ── */}
-        {(() => {
-          const primaryAgents = liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent");
-          const dedicatedFromFactory = liveAgents.filter(a => a.role === "Dedicated Agent");
-          const standbyFromTeam = agents.filter(a => a.status === "standby" || a.status === "scheduled");
-          const allDedicated = [
-            ...dedicatedFromFactory.map(a => ({ ...a, source: "factory" as const })),
-            ...standbyFromTeam.map(a => ({
-              id: a.id, name: a.name, emoji: a.emoji, role: a.role,
-              model: a.model, status: a.status, taskSummary: a.description || a.statusText || "",
-              source: "team" as const,
-            })),
-          ];
-
-          const renderAgentDesk = (agent: { id: string; name: string; emoji: string; model?: string; status: string; taskSummary?: string; role?: string; source?: string }, clickable: boolean) => {
-            const isWorking = agent.status === "active";
-            const isPrimary = agent.role !== "Sub-Agent" && agent.role !== "Dedicated Agent" && agent.role !== "standby" && agent.role !== "scheduled" && agent.status !== "standby" && agent.status !== "scheduled";
-            const isDedicated = agent.role === "Dedicated Agent" || agent.status === "standby" || agent.status === "scheduled" || agent.status === "idle";
-            const modelStr = agent.model || "";
-            const modelColor = modelStr.includes("opus") ? "#f0b429" : modelStr.includes("haiku") ? "#26c97a" : "#7c5cfc";
-            const statusColor = isWorking ? "#26c97a" : agent.status === "idle" ? "#9898a0" : agent.status === "scheduled" ? "#f0b429" : "#ffffff60";
-            const statusText = isWorking ? "→ In Progress" : agent.status === "idle" ? (agent.taskSummary || "○ IDLE") : agent.status === "scheduled" ? "⏰ SCHEDULED" : "💤 STANDBY";
-
-            // Color scheme: primary = purple glow, dedicated = blue glow
-            const borderColor = isPrimary
-              ? (isWorking ? "#7c5cfc50" : "#7c5cfc60")
-              : (isWorking ? "#4d7cfe50" : "#4d7cfe60");
-            const bgColor = isPrimary
-              ? (isWorking ? "linear-gradient(135deg, #1a1030 0%, #151525 100%)" : "linear-gradient(135deg, #1a1035 0%, #15102a 100%)")
-              : (isWorking ? "linear-gradient(135deg, #0f1a2e 0%, #101525 100%)" : "linear-gradient(135deg, #0f1a30 0%, #0e1528 100%)");
-
-            return (
-              <div
-                key={agent.id}
-                onClick={() => clickable && !isWorking ? setSelectedAgent(agent as LiveAgent) : null}
-                title={isWorking ? `${agent.name} is currently working — check In Progress zone` : undefined}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "3px",
-                  padding: "8px 12px 6px",
-                  background: bgColor,
-                  border: `1px solid ${borderColor}`,
-                  borderTop: `2px solid ${isPrimary ? "#7c5cfc" : "#4d7cfe"}`,
-                  borderRadius: "6px",
-                  minWidth: "80px",
-                  cursor: clickable && !isWorking ? "pointer" : "default",
-                }}
-              >
-                {/* Person in chair or empty chair */}
-                <div style={{ position: "relative", width: "40px", height: "44px", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-                  {isWorking ? (
-                    /* Empty chair — agent is out working */
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                      <span style={{ fontSize: "26px", lineHeight: 1 }}>🪑</span>
-                    </div>
-                  ) : (
-                    /* Person sitting in chair with emoji shirt */
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
-                      {/* Head */}
-                      <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: "#d4a574", border: "1px solid #c4956a", marginBottom: "-2px", zIndex: 2 }} />
-                      {/* Body/shirt with emoji */}
-                      <div style={{
-                        width: "24px", height: "18px", borderRadius: "4px 4px 0 0",
-                        background: isPrimary ? "#7c5cfc" : isDedicated ? "#4d7cfe" : "#26c97a",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: "10px", lineHeight: 1, zIndex: 2,
-                        border: `1px solid ${isPrimary ? "#9b7cff" : isDedicated ? "#6d9cff" : "#46e99a"}`,
-                      }}>
-                        {agent.emoji}
-                      </div>
-                      {/* Chair behind */}
-                      <span style={{ fontSize: "22px", lineHeight: 1, position: "absolute", bottom: "-6px", zIndex: 1, opacity: 0.6 }}>🪑</span>
-                    </div>
-                  )}
-                </div>
-                {/* Name */}
-                <div style={{ fontSize: "10px", fontWeight: 700, color: "#ffffff", textAlign: "center", lineHeight: 1.2, marginTop: "2px" }}>
-                  {agent.name}
-                </div>
-                {/* Model badge */}
-                {modelStr && (
-                  <span style={{ fontSize: "7px", color: modelColor, background: modelColor + "18", border: `1px solid ${modelColor}40`, padding: "1px 4px", borderRadius: "4px", fontWeight: 700 }}>
-                    {modelStr}
+        {/* ── Agent Desk Area ── */}
+        {deskAgents.length > 0 && (
+          <div
+            style={{
+              flexShrink: 0,
+              padding: isMobile ? "8px 14px" : "10px 24px",
+              borderBottom: "1px solid var(--border-subtle)",
+              background: "linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%)",
+            }}
+          >
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "flex-end" }}>
+              {/* Primary section */}
+              {primaryAgents.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <span style={{ fontSize: "8px", color: "#7c5cfc", letterSpacing: "0.1em", fontWeight: 700 }}>
+                    🟣 PRIMARY
                   </span>
-                )}
-                {/* Status */}
-                <div style={{ fontSize: "8px", color: statusColor, fontWeight: 600, textAlign: "center", lineHeight: 1.2, maxWidth: "90px" }}>
-                  {statusText}
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {primaryAgents.map(a => {
+                      const isWorking = a.status === "active" && !transitioning.has(a.id);
+                      return (
+                        <AgentDesk
+                          key={a.id}
+                          agent={{
+                            id: a.id,
+                            name: a.name,
+                            emoji: a.emoji,
+                            role: a.role,
+                            model: a.model,
+                            status: a.status,
+                            taskSummary: a.taskSummary,
+                          }}
+                          isWorking={isWorking}
+                          onClick={() => setSelectedAgent(a)}
+                          onMount={(el) => deskRefs.current.set(a.id, el)}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          };
+              )}
 
-          return (
-            <div
-              style={{
-                flexShrink: 0,
-                padding: isMobile ? "8px 14px" : "8px 24px",
-                borderBottom: "1px solid var(--border-subtle)",
-                background: "var(--bg-elevated)",
-              }}
-            >
-              {/* All agents in one row with section labels */}
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "flex-end" }}>
-                {primaryAgents.length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                    <span style={{ fontSize: "8px", color: "#7c5cfc", letterSpacing: "0.1em", fontWeight: 700 }}>PRIMARY</span>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      {primaryAgents.map(a => renderAgentDesk(a, true))}
-                    </div>
+              {/* Divider */}
+              {primaryAgents.length > 0 && allDedicated.length > 0 && (
+                <div style={{ width: "1px", background: "var(--border-default)", alignSelf: "stretch", margin: "0 4px" }} />
+              )}
+
+              {/* Dedicated section */}
+              {allDedicated.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <span style={{ fontSize: "8px", color: "#4d7cfe", letterSpacing: "0.1em", fontWeight: 700 }}>
+                    🔵 DEDICATED
+                  </span>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {allDedicated.map(a => {
+                      const isWorking = a.status === "active" && !transitioning.has(a.id);
+                      return (
+                        <AgentDesk
+                          key={a.id}
+                          agent={a}
+                          isWorking={isWorking}
+                          onClick={a.source === "factory" ? () => setSelectedAgent(a as unknown as LiveAgent) : undefined}
+                          onMount={(el) => deskRefs.current.set(a.id, el)}
+                        />
+                      );
+                    })}
                   </div>
-                )}
-                {primaryAgents.length > 0 && allDedicated.length > 0 && (
-                  <div style={{ width: "1px", background: "var(--border-default)", alignSelf: "stretch", margin: "0 4px" }} />
-                )}
-                {allDedicated.length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                    <span style={{ fontSize: "8px", color: "#4d7cfe", letterSpacing: "0.1em", fontWeight: 700 }}>DEDICATED</span>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      {allDedicated.map(a => renderAgentDesk(a, a.source === "factory"))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-          );
-        })()}
 
-        {/* ── Factory floor ──────────────────────────────────────────────── */}
+            {/* Floor line */}
+            <div style={{
+              height: "2px",
+              background: "linear-gradient(90deg, transparent 0%, #ffffff08 20%, #ffffff08 80%, transparent 100%)",
+              marginTop: "8px",
+            }} />
+          </div>
+        )}
+
+        {/* ── Factory Floor ──────────────────────────────────────────────── */}
         {isMobile ? (
           /* ── MOBILE: vertical stacked sections ── */
           <div
@@ -1365,9 +1634,9 @@ export default function AgentFactoryPage() {
                 key={zoneKey}
                 zoneKey={zoneKey}
                 tasks={tasks.filter((t) => t.status === zoneKey)}
-                agents={agents}
                 liveAgents={liveAgents}
-                onSelectTask={setSelectedTask} onSelectAgent={setSelectedAgent}
+                onSelectTask={setSelectedTask}
+                onSelectAgent={setSelectedAgent}
               />
             ))}
           </div>
@@ -1392,9 +1661,9 @@ export default function AgentFactoryPage() {
                   <FactoryZone
                     zoneKey={zoneKey}
                     tasks={tasks.filter((t) => t.status === zoneKey)}
-                    agents={agents}
                     liveAgents={liveAgents}
-                    onSelectTask={setSelectedTask} onSelectAgent={setSelectedAgent}
+                    onSelectTask={setSelectedTask}
+                    onSelectAgent={setSelectedAgent}
                   />
                 </div>
                 {idx < zones.length - 1 && <div style={{ width: "12px", flexShrink: 0 }} />}
@@ -1418,9 +1687,9 @@ export default function AgentFactoryPage() {
           }}
         >
           {isMobile ? (
-            /* Mobile bottom bar: stacked rows */
+            /* Mobile bottom bar */
             <>
-              {/* Row 1: scanner status + last scan */}
+              {/* Row 1: scanner status */}
               <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <div
@@ -1451,7 +1720,7 @@ export default function AgentFactoryPage() {
                 )}
               </div>
 
-              {/* Row 2: task count breakdown */}
+              {/* Row 2: task counts */}
               <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", alignItems: "center" }}>
                 {(["backlog", "in-progress", "in-review", "done"] as const).map((zone) => {
                   const cfg = ZONE_CONFIG[zone];
@@ -1474,7 +1743,7 @@ export default function AgentFactoryPage() {
               </div>
             </>
           ) : (
-            /* Desktop bottom bar: original horizontal layout */
+            /* Desktop bottom bar */
             <>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <div
@@ -1585,6 +1854,7 @@ export default function AgentFactoryPage() {
         </div>
       </div>
 
+      {/* ── Task Detail Modal ── */}
       {selectedTask && (
         <TaskDetailModal
           task={selectedTask}
@@ -1592,6 +1862,7 @@ export default function AgentFactoryPage() {
         />
       )}
 
+      {/* ── Agent Detail Modal ── */}
       {selectedAgent && (
         <div
           onClick={() => setSelectedAgent(null)}
@@ -1621,7 +1892,13 @@ export default function AgentFactoryPage() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ fontSize: "28px" }}>{selectedAgent.emoji}</span>
+                <PersonFigure
+                  emoji={selectedAgent.emoji}
+                  role={selectedAgent.role}
+                  bouncing={selectedAgent.status === "active"}
+                  agentId={selectedAgent.id}
+                  agentName={selectedAgent.name}
+                />
                 <div>
                   <div style={{ fontSize: "18px", fontWeight: 600, color: "var(--text-primary)" }}>{selectedAgent.name}</div>
                   <div style={{ fontSize: "12px", color: "var(--text-tertiary)" }}>{selectedAgent.role}</div>
