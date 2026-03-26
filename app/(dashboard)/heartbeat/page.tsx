@@ -64,6 +64,8 @@ export default function HeartbeatPage() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [loading, setLoading] = useState(true);
   const [, setTick] = useState(0);
+  const [showChecklist, setShowChecklist] = useState(false);
+  const [checklistContent, setChecklistContent] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -107,17 +109,79 @@ export default function HeartbeatPage() {
       className="flex flex-col h-full overflow-hidden"
       style={{ background: "var(--bg-primary)" }}
     >
+      {/* Checklist Modal */}
+      {showChecklist && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 1000,
+            background: "rgba(0,0,0,0.75)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+          onClick={() => setShowChecklist(false)}
+        >
+          <div
+            style={{
+              background: "var(--bg-elevated)",
+              border: "1.5px solid rgba(124,92,252,0.4)",
+              borderRadius: 12,
+              width: "min(720px, 92vw)",
+              maxHeight: "80vh",
+              display: "flex", flexDirection: "column",
+              overflow: "hidden",
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid var(--border-subtle)" }}>
+              <span style={{ fontWeight: 700, fontSize: 14, color: "#7c5cfc", letterSpacing: "0.1em", textTransform: "uppercase" }}>💓 HEARTBEAT.md — What runs every hour</span>
+              <button onClick={() => setShowChecklist(false)} style={{ background: "none", border: "none", color: "#888", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
+            </div>
+            <div style={{ overflowY: "auto", padding: "20px", fontFamily: "monospace", fontSize: 13, color: "var(--text-primary)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+              {checklistContent ?? "Loading…"}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div
         className="flex-shrink-0 px-6 py-5 border-b"
         style={{ borderColor: "var(--border-subtle)" }}
       >
-        <h1
-          className="text-xl font-bold tracking-widest uppercase mb-4"
-          style={{ color: "#ffffff", letterSpacing: "0.15em" }}
-        >
-          HEARTBEAT LOG
-        </h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1
+            className="text-xl font-bold tracking-widest uppercase"
+            style={{ color: "#ffffff", letterSpacing: "0.15em" }}
+          >
+            HEARTBEAT LOG
+          </h1>
+          <button
+            onClick={async () => {
+              if (!checklistContent) {
+                try {
+                  const res = await fetch("/api/heartbeat/checklist");
+                  const data = await res.json();
+                  setChecklistContent(data.content ?? "No checklist found.");
+                } catch {
+                  setChecklistContent("Failed to load HEARTBEAT.md.");
+                }
+              }
+              setShowChecklist(true);
+            }}
+            style={{
+              background: "rgba(124,92,252,0.12)",
+              border: "1px solid rgba(124,92,252,0.4)",
+              borderRadius: 8,
+              color: "#7c5cfc",
+              fontSize: 12,
+              fontWeight: 600,
+              padding: "6px 14px",
+              cursor: "pointer",
+              letterSpacing: "0.05em",
+            }}
+          >
+            💓 View Checklist
+          </button>
+        </div>
 
         {/* Stats bar */}
         <div className="flex gap-6">
