@@ -2021,7 +2021,7 @@ export default function AgentFactoryPage() {
           flexDirection: "column",
           height: "100%",
           background: "var(--bg-primary)",
-          overflow: "hidden",
+          overflow: isMobile ? "auto" : "hidden",
         }}
       >
         {/* ── Header ─────────────────────────────────────────────────────── */}
