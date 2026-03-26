@@ -66,24 +66,45 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PATCH — Update agent status (completed, failed)
+// PATCH — Update agent status or character config
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
-    const { id, status, completed_at } = body;
+    const { id, status, completed_at, character_config } = body;
 
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
 
     const sql = getDb();
-    await sql`
-      UPDATE mc_live_agents
-      SET status = ${status || 'completed'},
-          completed_at = ${completed_at || new Date().toISOString()},
-          updated_at = NOW()
-      WHERE id = ${id}
-    `;
+
+    // Update character_config if provided
+    if (character_config) {
+      await sql`
+        UPDATE mc_factory_agents
+        SET character_config = ${JSON.stringify(character_config)}::jsonb,
+            updated_at = NOW()
+        WHERE id = ${id}
+      `;
+    }
+
+    // Update status if provided
+    if (status) {
+      await sql`
+        UPDATE mc_factory_agents
+        SET status = ${status},
+            updated_at = NOW()
+        WHERE id = ${id}
+      `;
+      // Also update legacy table
+      await sql`
+        UPDATE mc_live_agents
+        SET status = ${status},
+            completed_at = ${completed_at || new Date().toISOString()},
+            updated_at = NOW()
+        WHERE id = ${id}
+      `.catch(() => {});
+    }
 
     return NextResponse.json({ success: true, id });
   } catch (e) {

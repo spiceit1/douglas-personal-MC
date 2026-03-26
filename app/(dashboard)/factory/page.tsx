@@ -2530,6 +2530,99 @@ export default function AgentFactoryPage() {
                   </div>
                 )}
               </div>
+
+              {/* ── Appearance Editor ── */}
+              <div style={{ padding: "12px", borderRadius: "8px", background: "var(--bg-primary)", border: "1px solid var(--border-subtle)" }}>
+                <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-tertiary)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>✨ Appearance</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "12px" }}>
+                  <PersonFigure
+                    emoji={selectedAgent.emoji}
+                    role={selectedAgent.role}
+                    agentId={selectedAgent.id}
+                    agentName={selectedAgent.name}
+                    characterConfig={selectedAgent.characterConfig}
+                    size="normal"
+                  />
+                  <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>Preview</div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                  <div>
+                    <label style={{ fontSize: "10px", color: "var(--text-tertiary)", display: "block", marginBottom: "3px" }}>Skin Color</label>
+                    <input
+                      type="color"
+                      defaultValue={selectedAgent.characterConfig?.skinColor || "#d4a574"}
+                      onChange={async (e) => {
+                        const res = await fetch("/api/factory/agents", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ id: selectedAgent.id, character_config: { ...selectedAgent.characterConfig, skinColor: e.target.value } }),
+                        });
+                        if (res.ok) fetchData();
+                      }}
+                      style={{ width: "100%", height: "28px", border: "1px solid var(--border-subtle)", borderRadius: "4px", background: "var(--bg-secondary)", cursor: "pointer" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "10px", color: "var(--text-tertiary)", display: "block", marginBottom: "3px" }}>Hair Color</label>
+                    <input
+                      type="color"
+                      defaultValue={selectedAgent.characterConfig?.hairColor || "#4a3520"}
+                      onChange={async (e) => {
+                        const res = await fetch("/api/factory/agents", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ id: selectedAgent.id, character_config: { ...selectedAgent.characterConfig, hairColor: e.target.value } }),
+                        });
+                        if (res.ok) fetchData();
+                      }}
+                      style={{ width: "100%", height: "28px", border: "1px solid var(--border-subtle)", borderRadius: "4px", background: "var(--bg-secondary)", cursor: "pointer" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "10px", color: "var(--text-tertiary)", display: "block", marginBottom: "3px" }}>Hair Style</label>
+                    <select
+                      defaultValue={selectedAgent.characterConfig?.hairStyle || "short"}
+                      onChange={async (e) => {
+                        const res = await fetch("/api/factory/agents", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ id: selectedAgent.id, character_config: { ...selectedAgent.characterConfig, hairStyle: e.target.value } }),
+                        });
+                        if (res.ok) fetchData();
+                      }}
+                      style={{ width: "100%", height: "28px", border: "1px solid var(--border-subtle)", borderRadius: "4px", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: "12px", cursor: "pointer" }}
+                    >
+                      <option value="short">Short</option>
+                      <option value="long">Long</option>
+                      <option value="bun">Bun</option>
+                      <option value="redspiky">Red Spiky</option>
+                      <option value="none">None</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "10px", color: "var(--text-tertiary)", display: "block", marginBottom: "3px" }}>Premium Desk</label>
+                    <button
+                      onClick={async () => {
+                        const newVal = !(selectedAgent.characterConfig?.premium);
+                        const res = await fetch("/api/factory/agents", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ id: selectedAgent.id, character_config: { ...selectedAgent.characterConfig, premium: newVal } }),
+                        });
+                        if (res.ok) fetchData();
+                      }}
+                      style={{
+                        width: "100%", height: "28px", border: "1px solid var(--border-subtle)", borderRadius: "4px",
+                        background: selectedAgent.characterConfig?.premium ? "#7c5cfc18" : "var(--bg-secondary)",
+                        color: selectedAgent.characterConfig?.premium ? "#7c5cfc" : "var(--text-tertiary)",
+                        fontSize: "11px", fontWeight: 600, cursor: "pointer",
+                      }}
+                    >
+                      {selectedAgent.characterConfig?.premium ? "👑 ON" : "OFF"}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
