@@ -306,7 +306,7 @@ export default function DashboardLayout({
         </aside>
 
         {/* ── Main area ────────────────────────────────────────────── */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "auto", minWidth: 0 }}>
 
           {/* Mobile top bar — hidden on /chat page since chat has its own header with agent selector */}
           <div
