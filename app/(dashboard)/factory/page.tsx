@@ -1214,74 +1214,10 @@ export default function AgentFactoryPage() {
 
         {/* Standby row removed — merged into DEDICATED AGENTS row below */}
 
-        {/* ── Primary agents roster (only show when NOT active — active ones are in In Progress) ── */}
-        {liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent" && a.status !== "active").length > 0 && (
-          <div
-            style={{
-              flexShrink: 0,
-              padding: isMobile ? "10px 14px" : "10px 24px",
-              borderBottom: "1px solid var(--border-subtle)",
-              background: "var(--bg-elevated)",
-              display: "flex",
-              alignItems: isMobile ? "flex-start" : "center",
-              gap: "10px",
-              flexWrap: "wrap",
-              overflowX: "auto",
-            }}
-          >
-            <span style={{ fontSize: "12px", color: "#ffffff", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
-              <span title="Main AI agents running on machines. Handle all tasks and conversations.">PRIMARY AGENTS:</span>
-            </span>
-            {liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent" && a.status !== "active").map((agent) => (
-              <div
-                key={agent.id}
-                onClick={() => setSelectedAgent(agent)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "6px 12px",
-                  background: agent.status === "active"
-                    ? "linear-gradient(135deg, #0f1a2e 0%, #1a1040 100%)"
-                    : agent.status === "completed"
-                    ? "linear-gradient(135deg, #081a11 0%, #0f2a1a 100%)"
-                    : "var(--bg-secondary)",
-                  border: agent.status === "active"
-                    ? "1px solid #4d7cfe80"
-                    : agent.status === "completed"
-                    ? "1px solid #26c97a60"
-                    : "1px solid var(--border-subtle)",
-                  borderRadius: "4px",
-                  flexShrink: 0,
-                  cursor: "pointer",
-                }}
-              >
-                <span style={{ fontSize: "18px" }}>{agent.emoji}</span>
-                <div>
-                  <div style={{ fontSize: "13px", color: "#ffffff", fontWeight: 600 }}>
-                    {agent.name}
-                    {agent.model && (
-                      <span style={{ marginLeft: "8px", fontSize: "9px", color: agent.model?.includes("opus") ? "#f0b429" : agent.model?.includes("haiku") ? "#26c97a" : "#7c5cfc", background: (agent.model?.includes("opus") ? "#f0b429" : agent.model?.includes("haiku") ? "#26c97a" : "#7c5cfc") + "18", border: `1px solid ${agent.model?.includes("opus") ? "#f0b429" : agent.model?.includes("haiku") ? "#26c97a" : "#7c5cfc"}40`, padding: "1px 6px", borderRadius: "8px", fontWeight: 700 }}>
-                        {agent.model}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: "10px", color: agent.status === "active" ? "#26c97a" : agent.status === "idle" ? "#9898a0" : agent.status === "completed" ? "#26c97a" : "#f05b5b", letterSpacing: "0.05em", fontWeight: 600 }}>
-                    {agent.status === "active" ? "🟢 LIVE" : agent.status === "idle" ? "○ IDLE" : agent.status === "completed" ? "✅ DONE" : agent.status.toUpperCase()}
-                  </div>
-                  {agent.taskSummary && (
-                    <div style={{ fontSize: "9px", color: "#888888", marginTop: 2, maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{agent.taskSummary}</div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── Dedicated agents roster (includes standby/scheduled from team + dedicated from factory) ── */}
+        {/* ── Agent Desks — Primary + Dedicated with chairs ── */}
         {(() => {
-          // Only show dedicated agents that are NOT currently running (running ones show in In Progress zone)
-          const dedicatedFromFactory = liveAgents.filter(a => a.role === "Dedicated Agent" && a.status !== "active");
+          const primaryAgents = liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent");
+          const dedicatedFromFactory = liveAgents.filter(a => a.role === "Dedicated Agent");
           const standbyFromTeam = agents.filter(a => a.status === "standby" || a.status === "scheduled");
           const allDedicated = [
             ...dedicatedFromFactory.map(a => ({ ...a, source: "factory" as const })),
@@ -1291,59 +1227,90 @@ export default function AgentFactoryPage() {
               source: "team" as const,
             })),
           ];
-          if (allDedicated.length === 0) return null;
+
+          const renderAgentDesk = (agent: { id: string; name: string; emoji: string; model?: string; status: string; taskSummary?: string; role?: string; source?: string }, clickable: boolean) => {
+            const isWorking = agent.status === "active";
+            const modelStr = agent.model || "";
+            const modelColor = modelStr.includes("opus") ? "#f0b429" : modelStr.includes("haiku") ? "#26c97a" : "#7c5cfc";
+            const statusColor = isWorking ? "#26c97a" : agent.status === "idle" ? "#9898a0" : agent.status === "scheduled" ? "#f0b429" : "#ffffff60";
+            const statusText = isWorking ? "→ In Progress" : agent.status === "idle" ? (agent.taskSummary || "○ IDLE") : agent.status === "scheduled" ? "⏰ SCHEDULED" : "💤 STANDBY";
+
+            return (
+              <div
+                key={agent.id}
+                onClick={() => clickable && !isWorking ? setSelectedAgent(agent as LiveAgent) : null}
+                title={isWorking ? `${agent.name} is currently working — check In Progress zone` : undefined}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "8px 14px",
+                  background: isWorking ? "var(--bg-tertiary)" : "var(--bg-secondary)",
+                  border: isWorking ? "1px dashed var(--border-default)" : "1px solid var(--border-subtle)",
+                  borderRadius: "6px",
+                  minWidth: "90px",
+                  opacity: isWorking ? 0.5 : 1,
+                  cursor: clickable && !isWorking ? "pointer" : "default",
+                }}
+              >
+                {/* Chair or Agent */}
+                <div style={{ fontSize: "24px", lineHeight: 1 }}>
+                  {isWorking ? "🪑" : agent.emoji}
+                </div>
+                {/* Name */}
+                <div style={{ fontSize: "11px", fontWeight: 700, color: isWorking ? "var(--text-tertiary)" : "#ffffff", textAlign: "center", lineHeight: 1.2 }}>
+                  {agent.name}
+                </div>
+                {/* Model badge */}
+                {modelStr && (
+                  <span style={{ fontSize: "8px", color: modelColor, background: modelColor + "18", border: `1px solid ${modelColor}40`, padding: "1px 5px", borderRadius: "6px", fontWeight: 700 }}>
+                    {modelStr}
+                  </span>
+                )}
+                {/* Status */}
+                <div style={{ fontSize: "9px", color: statusColor, fontWeight: 600, textAlign: "center", lineHeight: 1.2, maxWidth: "100px" }}>
+                  {statusText}
+                </div>
+              </div>
+            );
+          };
+
           return (
             <div
               style={{
                 flexShrink: 0,
-                padding: isMobile ? "10px 14px" : "10px 24px",
+                padding: isMobile ? "10px 14px" : "12px 24px",
                 borderBottom: "1px solid var(--border-subtle)",
                 background: "var(--bg-elevated)",
-                display: "flex",
-                alignItems: isMobile ? "flex-start" : "center",
-                gap: "8px",
-                flexWrap: "wrap",
-                overflowX: "auto",
               }}
             >
-              <span style={{ fontSize: "12px", color: "#4d7cfe", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
-                <span title="Always-on agents with a single purpose. Run on a schedule (e.g. every 20 min). Stay here whether running, idle, or standby.">DEDICATED AGENTS:</span>
-              </span>
-              {allDedicated.map((agent) => {
-                const statusColor = agent.status === "active" ? "#26c97a" : agent.status === "idle" ? "#9898a0" : agent.status === "scheduled" ? "#f0b429" : "#ffffff";
-                const statusText = agent.status === "active" ? "● RUNNING" : agent.status === "idle" ? (agent.taskSummary || "○ IDLE") : agent.status === "scheduled" ? "⏰ SCHEDULED" : "💤 STANDBY";
-                const statusOpacity = agent.status === "active" ? 1 : agent.status === "scheduled" ? 1 : 0.6;
-                const modelStr = agent.model || "";
-                const modelColor = modelStr.includes("opus") ? "#f0b429" : modelStr.includes("haiku") ? "#26c97a" : "#7c5cfc";
-                return (
-                  <div
-                    key={agent.id}
-                    onClick={() => agent.source === "factory" ? setSelectedAgent(agent as LiveAgent) : null}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      padding: "6px 12px",
-                      background: "var(--bg-secondary)",
-                      border: "1px solid var(--border-subtle)",
-                      borderRadius: "4px",
-                      flexShrink: 0,
-                      cursor: agent.source === "factory" ? "pointer" : "default",
-                    }}
-                  >
-                    <span style={{ fontSize: "18px" }}>{agent.emoji}</span>
-                    <div>
-                      <div style={{ fontSize: "13px", color: "#ffffff", fontWeight: 600 }}>{agent.name}</div>
-                      <div style={{ fontSize: "11px", color: statusColor, opacity: statusOpacity, letterSpacing: "0.05em" }}>
-                        {statusText}
-                      </div>
-                      {modelStr && (
-                        <div style={{ fontSize: "9px", color: modelColor, marginTop: 2 }}>{modelStr}</div>
-                      )}
-                    </div>
+              {/* Primary Agents */}
+              {primaryAgents.length > 0 && (
+                <div style={{ marginBottom: allDedicated.length > 0 ? "10px" : 0 }}>
+                  <div style={{ fontSize: "10px", color: "#ffffff", letterSpacing: "0.12em", fontWeight: 700, marginBottom: "8px" }} title="Main AI agents running on machines. Handle all tasks and conversations.">
+                    PRIMARY
+                    <br />
+                    AGENTS
                   </div>
-                );
-              })}
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {primaryAgents.map(a => renderAgentDesk(a, true))}
+                  </div>
+                </div>
+              )}
+              {/* Dedicated Agents */}
+              {allDedicated.length > 0 && (
+                <div>
+                  <div style={{ fontSize: "10px", color: "#4d7cfe", letterSpacing: "0.12em", fontWeight: 700, marginBottom: "8px" }} title="Always-on agents with a single purpose. Run on a schedule. Chair is empty when they're working in the In Progress zone.">
+                    DEDICATED
+                    <br />
+                    AGENTS
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {allDedicated.map(a => renderAgentDesk(a, a.source === "factory"))}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })()}
