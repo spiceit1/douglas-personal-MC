@@ -43,12 +43,27 @@ const FILTER_TABS: { id: FilterType; label: string }[] = [
   { id: "alert",  label: "Alert"  },
 ];
 
+const HEARTBEAT_INTERVAL_MINUTES = 60;
+
+function nextRunCountdown(lastHeartbeat: string | null): string {
+  if (!lastHeartbeat) return "—";
+  const last = new Date(lastHeartbeat).getTime();
+  const nextRun = last + HEARTBEAT_INTERVAL_MINUTES * 60 * 1000;
+  const secsLeft = Math.floor((nextRun - Date.now()) / 1000);
+  if (secsLeft <= 0) return "any moment";
+  const m = Math.floor(secsLeft / 60);
+  const s = secsLeft % 60;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
 export default function HeartbeatPage() {
   const [entries, setEntries] = useState<HeartbeatEntry[]>([]);
   const [lastHeartbeat, setLastHeartbeat] = useState<string | null>(null);
   const [totalToday, setTotalToday] = useState(0);
   const [filter, setFilter] = useState<FilterType>("all");
   const [loading, setLoading] = useState(true);
+  const [, setTick] = useState(0);
 
   const fetchData = useCallback(async () => {
     try {
@@ -70,6 +85,12 @@ export default function HeartbeatPage() {
     const interval = setInterval(fetchData, 30_000);
     return () => clearInterval(interval);
   }, [fetchData]);
+
+  // Live countdown tick every second
+  useEffect(() => {
+    const ticker = setInterval(() => setTick(t => t + 1), 1000);
+    return () => clearInterval(ticker);
+  }, []);
 
   // Count actions taken today
   const todayStart = new Date();
@@ -142,6 +163,21 @@ export default function HeartbeatPage() {
             </div>
             <div className="text-2xl font-bold" style={{ color: "#ffffff" }}>
               {actionsToday}
+            </div>
+          </div>
+
+          <div
+            className="px-4 py-2.5 rounded-lg border"
+            style={{
+              background: "rgba(124,92,252,0.08)",
+              borderColor: "rgba(124,92,252,0.35)",
+            }}
+          >
+            <div className="text-xs uppercase tracking-wider mb-1" style={{ color: "#7c5cfc", opacity: 0.9, fontSize: "0.6rem" }}>
+              Next Run
+            </div>
+            <div className="text-2xl font-bold" style={{ color: "#7c5cfc" }}>
+              {nextRunCountdown(lastHeartbeat)}
             </div>
           </div>
         </div>
