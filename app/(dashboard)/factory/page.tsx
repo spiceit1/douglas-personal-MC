@@ -187,6 +187,14 @@ function PersonFigure({
   const isShmackAgent = isShmack({ id: agentId, name: agentName });
   const skinColor = isShmackAgent ? "#f5d0b0" : "#d4a574";
   const skinBorder = isShmackAgent ? "#e8c0a0" : "#c4956a";
+  const hairStyle = isShmackAgent ? "redspiky" : "short";
+
+  // Mii-style proportions: big head, small body
+  const miiHeadSize = isSmall ? 20 : 28;
+  const miiBodyW = isSmall ? 20 : 26;
+  const miiBodyH = isSmall ? 14 : 20;
+  const miiEmoji = isSmall ? 8 : 11;
+  const eyeSize = isSmall ? 2 : 3;
 
   return (
     <div
@@ -197,40 +205,75 @@ function PersonFigure({
         animation: bouncing ? "agentBounce 1s ease-in-out infinite" : "none",
       }}
     >
-      {/* Hair (Shmack only) */}
-      {isShmackAgent && (
+      {/* Hair */}
+      {isShmackAgent ? (
+        /* Red spiky hair for Shmack */
+        <div style={{ display: "flex", gap: 1, marginBottom: isSmall ? -6 : -8, zIndex: 3 }}>
+          <div style={{ width: isSmall ? 4 : 6, height: isSmall ? 6 : 10, background: "#c0442a", borderRadius: "50% 50% 20% 20%", transform: "rotate(-15deg)" }} />
+          <div style={{ width: isSmall ? 5 : 7, height: isSmall ? 8 : 12, background: "#d45535", borderRadius: "50% 50% 20% 20%" }} />
+          <div style={{ width: isSmall ? 4 : 6, height: isSmall ? 6 : 10, background: "#c0442a", borderRadius: "50% 50% 20% 20%", transform: "rotate(15deg)" }} />
+        </div>
+      ) : hairStyle !== "none" ? (
+        /* Generic hair */
         <div style={{
-          width: headSize * 0.7,
-          height: isSmall ? 4 : 6,
-          background: "#c0442a",
-          borderRadius: `${isSmall ? 3 : 4}px ${isSmall ? 3 : 4}px 1px 1px`,
-          marginBottom: -2,
+          width: miiHeadSize * 0.85,
+          height: isSmall ? 5 : 8,
+          background: "#4a3520",
+          borderRadius: `${isSmall ? 4 : 6}px ${isSmall ? 4 : 6}px 1px 1px`,
+          marginBottom: isSmall ? -5 : -7,
           zIndex: 3,
-          border: "1px solid #a03820",
-          borderBottom: "none",
         }} />
-      )}
-      {/* Head */}
+      ) : null}
+      
+      {/* Head — big Mii-style */}
       <div style={{
-        width: headSize,
-        height: headSize,
+        width: miiHeadSize,
+        height: miiHeadSize,
         borderRadius: "50%",
         background: skinColor,
-        border: `1px solid ${skinBorder}`,
-        marginBottom: sitting ? -2 : -3,
+        border: `1.5px solid ${skinBorder}`,
+        marginBottom: -3,
         zIndex: 2,
         position: "relative",
-      }} />
+        boxShadow: "inset 0 -2px 4px rgba(0,0,0,0.1)",
+      }}>
+        {/* Eyes */}
+        {!isSmall && (
+          <>
+            <div style={{ position: "absolute", left: "22%", top: "38%", width: eyeSize * 2, height: eyeSize * 2.2, borderRadius: "50%", background: "white" }}>
+              <div style={{ position: "absolute", right: 0, top: "15%", width: eyeSize * 1.3, height: eyeSize * 1.3, borderRadius: "50%", background: "#2a2a3a" }}>
+                <div style={{ position: "absolute", right: 1, top: 1, width: eyeSize * 0.5, height: eyeSize * 0.5, borderRadius: "50%", background: "white" }} />
+              </div>
+            </div>
+            <div style={{ position: "absolute", right: "22%", top: "38%", width: eyeSize * 2, height: eyeSize * 2.2, borderRadius: "50%", background: "white" }}>
+              <div style={{ position: "absolute", right: 0, top: "15%", width: eyeSize * 1.3, height: eyeSize * 1.3, borderRadius: "50%", background: "#2a2a3a" }}>
+                <div style={{ position: "absolute", right: 1, top: 1, width: eyeSize * 0.5, height: eyeSize * 0.5, borderRadius: "50%", background: "white" }} />
+              </div>
+            </div>
+            {/* Smile */}
+            <div style={{
+              position: "absolute", bottom: "20%", left: "50%", transform: "translateX(-50%)",
+              width: miiHeadSize * 0.35, height: miiHeadSize * 0.15,
+              borderBottom: `1.5px solid ${skinBorder}`,
+              borderRadius: "0 0 50% 50%",
+            }} />
+            {/* Blush */}
+            <div style={{ position: "absolute", left: "8%", top: "55%", width: eyeSize * 2.5, height: eyeSize * 1.2, borderRadius: "50%", background: "#ff9999", opacity: 0.15 }} />
+            <div style={{ position: "absolute", right: "8%", top: "55%", width: eyeSize * 2.5, height: eyeSize * 1.2, borderRadius: "50%", background: "#ff9999", opacity: 0.15 }} />
+          </>
+        )}
+      </div>
+
       {/* Body/Shirt with emoji */}
       <div style={{
-        width: bodyW,
-        height: bodyH,
-        borderRadius: `${isSmall ? 3 : 5}px ${isSmall ? 3 : 5}px 2px 2px`,
-        background: colors.shirt,
+        width: miiBodyW,
+        height: miiBodyH,
+        borderRadius: `${isSmall ? 4 : 6}px ${isSmall ? 4 : 6}px 2px 2px`,
+        background: `linear-gradient(180deg, ${colors.shirt} 0%, ${colors.shirt}dd 100%)`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize,
+        fontSize: miiEmoji,
         lineHeight: 1,
         zIndex: 2,
         border: `1px solid ${colors.border}`,
@@ -238,21 +281,57 @@ function PersonFigure({
       }}>
         {emoji}
       </div>
-      {/* Legs (only when standing/walking, not sitting) */}
+
+      {/* Arms */}
+      <div style={{
+        position: "relative",
+        marginTop: -(miiBodyH + 4),
+        width: miiBodyW + (isSmall ? 10 : 14),
+        height: miiBodyH,
+        zIndex: 1,
+        pointerEvents: "none",
+      }}>
+        <div style={{ position: "absolute", left: 0, top: isSmall ? 2 : 3, width: isSmall ? 5 : 7, height: isSmall ? 10 : 14, borderRadius: isSmall ? 3 : 4, background: colors.shirt, border: `1px solid ${colors.border}` }} />
+        <div style={{ position: "absolute", right: 0, top: isSmall ? 2 : 3, width: isSmall ? 5 : 7, height: isSmall ? 10 : 14, borderRadius: isSmall ? 3 : 4, background: colors.shirt, border: `1px solid ${colors.border}` }} />
+        {/* Hands */}
+        <div style={{ position: "absolute", left: isSmall ? -1 : -1, bottom: isSmall ? -2 : -3, width: isSmall ? 6 : 8, height: isSmall ? 6 : 8, borderRadius: "50%", background: skinColor, border: `1px solid ${skinBorder}` }} />
+        <div style={{ position: "absolute", right: isSmall ? -1 : -1, bottom: isSmall ? -2 : -3, width: isSmall ? 6 : 8, height: isSmall ? 6 : 8, borderRadius: "50%", background: skinColor, border: `1px solid ${skinBorder}` }} />
+      </div>
+      <div style={{ height: miiBodyH - 2 }} />
+
+      {/* Legs */}
       {!sitting && (
-        <div style={{ display: "flex", gap: isSmall ? 3 : 4, marginTop: -1, zIndex: 1 }}>
+        <div style={{ display: "flex", gap: isSmall ? 3 : 4, marginTop: -2, zIndex: 1 }}>
           <div style={{
-            width: legW,
-            height: legH,
+            width: isSmall ? 5 : 7,
+            height: isSmall ? 8 : 12,
             background: "#3a3a50",
-            borderRadius: "1px 1px 2px 2px",
+            borderRadius: "2px 2px 3px 3px",
             border: "1px solid #4a4a60",
           }} />
           <div style={{
-            width: legW,
-            height: legH,
+            width: isSmall ? 5 : 7,
+            height: isSmall ? 8 : 12,
             background: "#3a3a50",
-            borderRadius: "1px 1px 2px 2px",
+            borderRadius: "2px 2px 3px 3px",
+            border: "1px solid #4a4a60",
+          }} />
+        </div>
+      )}
+      {sitting && (
+        <div style={{ display: "flex", gap: isSmall ? 4 : 6, marginTop: -1, zIndex: 1 }}>
+          <div style={{
+            width: isSmall ? 7 : 10,
+            height: isSmall ? 5 : 7,
+            background: "#3a3a50",
+            borderRadius: "3px",
+            border: "1px solid #4a4a60",
+          }} />
+          <div style={{
+            width: isSmall ? 7 : 10,
+            height: isSmall ? 5 : 7,
+            background: "#3a3a50",
+            borderRadius: "3px",
             border: "1px solid #4a4a60",
           }} />
         </div>
