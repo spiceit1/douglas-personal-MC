@@ -365,7 +365,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Page content */}
-          <main style={{ flex: 1, overflow: "hidden" }}>
+          <main style={{ flex: 1, overflow: "auto" }}>
             {children}
           </main>
         </div>
