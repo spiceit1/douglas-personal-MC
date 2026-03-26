@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     const sql = getDb();
     await sql`
-      INSERT INTO mc_factory_agents (id, session_key, name, emoji, role, model, task_summary, status, updated_at)
+      INSERT INTO mc_factory_agents (id, session_key, name, emoji, role, model, task_summary, status, started_at, updated_at)
       VALUES (
         ${id},
         ${session_key || null},
@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
         ${model || null},
         ${task_summary || null},
         'active',
+        NOW(),
         NOW()
       )
       ON CONFLICT (id) DO UPDATE SET
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
         task_summary = EXCLUDED.task_summary,
         session_key = EXCLUDED.session_key,
         status = 'active',
+        started_at = NOW(),
         updated_at = NOW()
     `;
 
@@ -84,9 +86,11 @@ export async function PATCH(req: NextRequest) {
 
     // Update status if provided
     if (status) {
+      const isCompleted = status === 'completed' || status === 'failed';
       await sql`
         UPDATE mc_factory_agents
         SET status = ${status},
+            completed_at = ${isCompleted ? (completed_at || new Date().toISOString()) : null},
             updated_at = NOW()
         WHERE id = ${id}
       `;
