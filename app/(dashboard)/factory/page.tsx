@@ -1285,28 +1285,14 @@ export default function AgentFactoryPage() {
                 background: "var(--bg-elevated)",
               }}
             >
-              {/* Primary Agents */}
-              {primaryAgents.length > 0 && (
-                <div style={{ marginBottom: allDedicated.length > 0 ? "8px" : 0 }}>
-                  <div style={{ fontSize: "10px", color: "#ffffff", letterSpacing: "0.12em", fontWeight: 700, marginBottom: "6px" }} title="Main AI agents running on machines. Handle all tasks and conversations.">
-                    PRIMARY AGENTS
-                  </div>
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                    {primaryAgents.map(a => renderAgentDesk(a, true))}
-                  </div>
-                </div>
-              )}
-              {/* Dedicated Agents */}
-              {allDedicated.length > 0 && (
-                <div>
-                  <div style={{ fontSize: "10px", color: "#4d7cfe", letterSpacing: "0.12em", fontWeight: 700, marginBottom: "6px" }} title="Always-on agents with a single purpose. Run on a schedule. Chair is empty when they're working in the In Progress zone.">
-                    DEDICATED AGENTS
-                  </div>
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                    {allDedicated.map(a => renderAgentDesk(a, a.source === "factory"))}
-                  </div>
-                </div>
-              )}
+              {/* All agents in one row */}
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "flex-start" }}>
+                {primaryAgents.map(a => renderAgentDesk(a, true))}
+                {primaryAgents.length > 0 && allDedicated.length > 0 && (
+                  <div style={{ width: "1px", background: "var(--border-subtle)", alignSelf: "stretch", margin: "0 4px" }} />
+                )}
+                {allDedicated.map(a => renderAgentDesk(a, a.source === "factory"))}
+              </div>
             </div>
           );
         })()}
