@@ -667,12 +667,12 @@ function AgentDesk({
     return "standing";
   })();
 
-  const showMug = isShmackAgent;
+  const showMug = isPremium;
 
   // Shmack gets a bigger card — he's the boss
-  const cardWidth = isShmackAgent ? 250 : 200;
-  const cardMinHeight = isShmackAgent ? 220 : 190;
-  const deskWidth = isShmackAgent ? 250 : 220;
+  const cardWidth = isPremium ? 250 : 200;
+  const cardMinHeight = isPremium ? 220 : 190;
+  const deskWidth = isPremium ? 250 : 220;
 
   return (
     <div
@@ -705,7 +705,7 @@ function AgentDesk({
         top: 0,
         left: isShmackAgent ? "5%" : "10%",
         right: isShmackAgent ? "5%" : "10%",
-        height: isShmackAgent ? 3 : 2,
+        height: isPremium ? 3 : 2,
         background: `linear-gradient(90deg, transparent, ${accentColor}${isShmackAgent ? "80" : "60"}, transparent)`,
         borderRadius: "0 0 4px 4px",
       }} />
@@ -721,7 +721,7 @@ function AgentDesk({
       <div style={{
         position: "relative",
         width: "100%",
-        height: isShmackAgent ? 170 : 150,
+        height: isPremium ? 170 : 150,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -735,7 +735,7 @@ function AgentDesk({
           transform: "translateX(-50%)",
           zIndex: 1,
         }}>
-          <OfficeChair empty={isWorking} scale={isWorking ? 1 : (isShmackAgent ? 0.95 : 0.85)} premium={isShmackAgent} />
+          <OfficeChair empty={isWorking} scale={isWorking ? 1 : (isPremium ? 0.95 : 0.85)} premium={isPremium} />
         </div>
 
         {/* Layer 2: Seated Agent (z:2) */}
@@ -775,7 +775,7 @@ function AgentDesk({
           {/* Desk top surface */}
           <div style={{
             width: deskWidth,
-            height: isShmackAgent ? 10 : 8,
+            height: isPremium ? 10 : 8,
             background: isShmackAgent
               ? `linear-gradient(180deg, #2a3550 0%, ${FACTORY_VARS.desk} 100%)`
               : `linear-gradient(180deg, ${FACTORY_VARS.desk2} 0%, ${FACTORY_VARS.desk} 100%)`,
@@ -798,8 +798,8 @@ function AgentDesk({
               {/* Monitor — bigger for Shmack */}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                 <div style={{
-                  width: isShmackAgent ? 52 : 44,
-                  height: isShmackAgent ? 36 : 30,
+                  width: isPremium ? 52 : 44,
+                  height: isPremium ? 36 : 30,
                   background: "#0a0f1a",
                   border: `2px solid ${accentColor}30`,
                   borderRadius: "4px 4px 0 0",
@@ -812,9 +812,9 @@ function AgentDesk({
                 }}>
                   {!isWorking && (
                     <>
-                      <div style={{ width: isShmackAgent ? 26 : 20, height: 2, background: accentColor, borderRadius: 1, opacity: 0.4 }} />
-                      <div style={{ position: "absolute", bottom: 4, left: 6, width: isShmackAgent ? 18 : 14, height: 1.5, background: accentColor, borderRadius: 1, opacity: 0.2 }} />
-                      <div style={{ position: "absolute", bottom: 8, left: 6, width: isShmackAgent ? 30 : 24, height: 1.5, background: accentColor, borderRadius: 1, opacity: 0.15 }} />
+                      <div style={{ width: isPremium ? 26 : 20, height: 2, background: accentColor, borderRadius: 1, opacity: 0.4 }} />
+                      <div style={{ position: "absolute", bottom: 4, left: 6, width: isPremium ? 18 : 14, height: 1.5, background: accentColor, borderRadius: 1, opacity: 0.2 }} />
+                      <div style={{ position: "absolute", bottom: 8, left: 6, width: isPremium ? 30 : 24, height: 1.5, background: accentColor, borderRadius: 1, opacity: 0.15 }} />
                     </>
                   )}
                   {isWorking && (
@@ -823,7 +823,7 @@ function AgentDesk({
                 </div>
                 {/* Monitor stand */}
                 <div style={{ width: 6, height: 6, background: "#333" }} />
-                <div style={{ width: isShmackAgent ? 22 : 18, height: 3, background: "#333", borderRadius: 2 }} />
+                <div style={{ width: isPremium ? 22 : 18, height: 3, background: "#333", borderRadius: 2 }} />
               </div>
 
               {/* Keyboard (only if not working) */}
@@ -880,7 +880,7 @@ function AgentDesk({
                       letterSpacing: "0.03em",
                       fontFamily: "Arial, sans-serif",
                       lineHeight: 1,
-                    }}>BOSS</span>
+                    }}>{agent.characterConfig?.mugText || "BOSS"}</span>
                     {/* Handle */}
                     <div style={{
                       position: "absolute",
