@@ -405,8 +405,15 @@ async function syncAgentStatus() {
           // Currently scanning
           await sql`UPDATE mc_factory_agents SET status='active', task_summary='SCANNING — finding deals...', updated_at=NOW() WHERE id='scout'`;
         } else if (minsSinceLast <= 5) {
-          // Just finished — show in Done briefly
-          const statusText = `Completed scan — found deals`;
+          // Just finished — parse actual deal count from log
+          let dealCount = 0;
+          for (let i = lines.length - 1; i >= Math.max(0, lines.length - 20); i--) {
+            const dealMatch = lines[i].match(/Found (\d+) new deal/);
+            if (dealMatch) { dealCount = parseInt(dealMatch[1]); break; }
+          }
+          const statusText = dealCount > 0
+            ? `Completed scan — found ${dealCount} deal${dealCount > 1 ? 's' : ''}`
+            : `Completed scan — 0 deals found`;
           await sql`UPDATE mc_factory_agents SET status='completed', task_summary=${statusText}, updated_at=NOW() WHERE id='scout'`;
         } else {
           // Idle — waiting for next run

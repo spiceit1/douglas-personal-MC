@@ -84,6 +84,7 @@ export async function GET() {
       startedAt: r.started_at || r.created_at,
       completedAt: r.completed_at || (r.status === 'completed' ? r.updated_at : null),
       updatedAt: r.updated_at,
+      characterConfig: r.character_config || {},
     }));
 
     // Compute stats

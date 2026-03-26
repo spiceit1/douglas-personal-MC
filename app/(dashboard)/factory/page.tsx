@@ -38,6 +38,13 @@ interface LiveAgent {
   taskId?: string;
   startedAt: string;
   completedAt?: string;
+  characterConfig?: {
+    skinColor?: string;
+    hairStyle?: string;
+    hairColor?: string;
+    premium?: boolean;
+    mugText?: string;
+  };
 }
 
 interface ScannerInfo {
@@ -351,6 +358,7 @@ function PersonFigure({
   agentId,
   agentName,
   pose,
+  characterConfig,
 }: {
   emoji: string;
   role: string;
@@ -361,13 +369,14 @@ function PersonFigure({
   agentId?: string;
   agentName?: string;
   pose?: "mouse" | "keyboard" | "thinking" | "relaxed" | "standing";
+  characterConfig?: { skinColor?: string; hairStyle?: string; hairColor?: string; premium?: boolean; mugText?: string };
 }) {
   const colors = getAgentColor(role, status);
   const isSmall = size === "small";
   const isShmackAgent = isShmack({ id: agentId, name: agentName });
-  const skinColor = isShmackAgent ? FACTORY_VARS.skinShmack : FACTORY_VARS.skinDefault;
-  const skinBorder = isShmackAgent ? "#e8c0a0" : "#c4956a";
-  // Shmack always wears purple — he's the boss
+  // Use characterConfig if available, fall back to Shmack detection
+  const skinColor = characterConfig?.skinColor || (isShmackAgent ? FACTORY_VARS.skinShmack : FACTORY_VARS.skinDefault);
+  const skinBorder = skinColor === FACTORY_VARS.skinShmack ? "#e8c0a0" : "#c4956a";
   const shirtColor = isShmackAgent ? "#7c5cfc" : colors.shirt;
   const shirtBorder = isShmackAgent ? "#9b7cff" : colors.border;
 
@@ -392,8 +401,8 @@ function PersonFigure({
         animation: bouncing ? "agentBounce 1s ease-in-out infinite" : "none",
       }}
     >
-      {/* Hair */}
-      {isShmackAgent ? (
+      {/* Hair — uses characterConfig.hairStyle if available, falls back to Shmack detection */}
+      {(characterConfig?.hairStyle === "redspiky" || (!characterConfig?.hairStyle && isShmackAgent)) ? (
         <div style={{ display: "flex", gap: isSmall ? 1 : 0, marginBottom: isSmall ? -8 : -10, zIndex: 5, position: "relative" }}>
           <div style={{ width: isSmall ? 5 : 6, height: isSmall ? 7 : 14, background: "#b03820", borderRadius: "50% 50% 20% 20%", transform: "rotate(-30deg)", marginRight: -1 }} />
           <div style={{ width: isSmall ? 4 : 7, height: isSmall ? 9 : 18, background: "#c0442a", borderRadius: "50% 50% 20% 20%", transform: "rotate(-12deg)" }} />
@@ -605,13 +614,14 @@ function AgentDesk({
   onClick,
   onMount,
 }: {
-  agent: { id: string; name: string; emoji: string; role: string; model?: string; status: string; taskSummary?: string };
+  agent: { id: string; name: string; emoji: string; role: string; model?: string; status: string; taskSummary?: string; characterConfig?: { skinColor?: string; hairStyle?: string; hairColor?: string; premium?: boolean; mugText?: string } };
   isWorking: boolean;
   onClick?: () => void;
   onMount?: (el: HTMLDivElement | null) => void;
 }) {
   const primary = isPrimaryAgent(agent.role, agent.status);
   const isSub = agent.role === "Sub-Agent";
+  const isPremium = agent.characterConfig?.premium || isShmack(agent);
   const colors = getAgentColor(agent.role, agent.status);
   const modelStr = agent.model || "";
   const modelColor = modelStr.includes("opus") ? "#f0b429" : modelStr.includes("haiku") ? "#26c97a" : "#7c5cfc";
@@ -725,6 +735,7 @@ function AgentDesk({
               agentId={agent.id}
               agentName={agent.name}
               pose={agentPose}
+              characterConfig={agent.characterConfig}
             />
           </div>
         )}
