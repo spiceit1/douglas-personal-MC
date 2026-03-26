@@ -2112,6 +2112,8 @@ export default function AgentFactoryPage() {
               padding: isMobile ? "8px 14px" : "10px 24px",
               borderBottom: "1px solid var(--border-subtle)",
               background: "linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%)",
+              maxHeight: isMobile ? "none" : "45vh",
+              overflowY: "auto",
             }}
           >
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "stretch" }}>
