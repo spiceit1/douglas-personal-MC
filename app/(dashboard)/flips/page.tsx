@@ -79,11 +79,13 @@ function computeStatus(flip: Flip): FlipStatus {
 function estimatedProfit(flip: Flip): number {
   const qty = flip.quantity;
   if (flip.soldPrice !== null && flip.profit !== null) return flip.profit;
-  return flip.listPrice * (1 - flip.sellerFee) * qty - flip.buyAllIn * qty;
+  // buyAllIn is already the TOTAL cost for all tickets, not per-ticket
+  return flip.listPrice * (1 - flip.sellerFee) * qty - flip.buyAllIn;
 }
 
 function estimatedROI(flip: Flip): number {
-  const totalCost = flip.buyAllIn * flip.quantity;
+  // buyAllIn is already total cost
+  const totalCost = flip.buyAllIn;
   if (totalCost === 0) return 0;
   return (estimatedProfit(flip) / totalCost) * 100;
 }
