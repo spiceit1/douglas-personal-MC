@@ -1,26 +1,16 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { getDb } from "@/lib/db";
 
 export async function GET() {
   try {
-    // Try common workspace locations
-    const candidates = [
-      process.env.HEARTBEAT_MD_PATH,
-      path.join(process.env.WORKSPACE_PATH ?? "", "HEARTBEAT.md"),
-      path.join(process.env.HOME ?? "", ".openclaw", "workspace", "HEARTBEAT.md"),
-      "/Users/douglasdweck/.openclaw/workspace/HEARTBEAT.md",
-    ].filter(Boolean) as string[];
-
-    for (const p of candidates) {
-      if (fs.existsSync(p)) {
-        const content = fs.readFileSync(p, "utf8");
-        return NextResponse.json({ content, path: p });
-      }
+    const sql = getDb();
+    // Store HEARTBEAT.md content in the DB so it works on any deployment
+    const rows = await sql`SELECT value FROM mc_settings WHERE key = 'heartbeat_md' LIMIT 1`;
+    if (rows.length > 0) {
+      return NextResponse.json({ content: rows[0].value });
     }
-
-    return NextResponse.json({ content: "HEARTBEAT.md not found. Set HEARTBEAT_MD_PATH env var to the full path." });
+    return NextResponse.json({ content: "No HEARTBEAT.md content found in DB.\n\nRun this to sync it:\nInsert into mc_settings (key, value) the contents of your HEARTBEAT.md file." });
   } catch (e: unknown) {
-    return NextResponse.json({ content: `Error reading HEARTBEAT.md: ${e instanceof Error ? e.message : String(e)}` });
+    return NextResponse.json({ content: `Error: ${e instanceof Error ? e.message : String(e)}` });
   }
 }
