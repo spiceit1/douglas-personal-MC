@@ -1214,8 +1214,8 @@ export default function AgentFactoryPage() {
 
         {/* Standby row removed — merged into DEDICATED AGENTS row below */}
 
-        {/* ── Primary agents roster (primary only) ── */}
-        {liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent").length > 0 && (
+        {/* ── Primary agents roster (only show when NOT active — active ones are in In Progress) ── */}
+        {liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent" && a.status !== "active").length > 0 && (
           <div
             style={{
               flexShrink: 0,
@@ -1232,7 +1232,7 @@ export default function AgentFactoryPage() {
             <span style={{ fontSize: "12px", color: "#ffffff", letterSpacing: "0.12em", fontWeight: 700, flexShrink: 0 }}>
               <span title="Main AI agents running on machines. Handle all tasks and conversations.">PRIMARY AGENTS:</span>
             </span>
-            {liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent").map((agent) => (
+            {liveAgents.filter(a => a.role !== "Sub-Agent" && a.role !== "Dedicated Agent" && a.status !== "active").map((agent) => (
               <div
                 key={agent.id}
                 onClick={() => setSelectedAgent(agent)}
