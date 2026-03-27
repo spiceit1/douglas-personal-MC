@@ -1057,7 +1057,9 @@ function WorkstationFigure({
   const [elapsed, setElapsed] = useState("");
 
   useEffect(() => {
+    if (!agent.startedAt) { setElapsed(""); return; }
     const started = new Date(agent.startedAt).getTime();
+    if (isNaN(started)) { setElapsed(""); return; }
     const update = () => {
       const end = agent.completedAt ? new Date(agent.completedAt).getTime() : Date.now();
       const secs = Math.floor((end - started) / 1000);

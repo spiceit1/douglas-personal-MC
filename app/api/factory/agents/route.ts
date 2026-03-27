@@ -87,10 +87,12 @@ export async function PATCH(req: NextRequest) {
     // Update status if provided
     if (status) {
       const isCompleted = status === 'completed' || status === 'failed';
+      const isIdle = status === 'idle' || status === 'standby';
       await sql`
         UPDATE mc_factory_agents
         SET status = ${status},
             completed_at = ${isCompleted ? (completed_at || new Date().toISOString()) : null},
+            started_at = ${isIdle ? null : sql`started_at`},
             updated_at = NOW()
         WHERE id = ${id}
       `;
